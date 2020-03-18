@@ -104,7 +104,24 @@ which can be safely ignored.
 
 ### Fit histograms
 
-TODO
+Histogram fitting uses local running or condor.
+
+To run locally (with 16 threads):
+```bash
+./tnp_fitter.py fit muon Z Run2017_UL -j 16
+```
+
+To submit to condor:
+```bash
+./tnp_fitter.py fit muon Z Run2017_UL --condor
+condor_submit condor.sub
+```
+
+The histograms which are fit can be controlled with optional filters.
+See documentation with:
+```bash
+./tnp_fitter.py fit -h
+```
 
 ### Extract scale factors
 
