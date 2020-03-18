@@ -86,16 +86,20 @@ You can optionally filter the efficiencies and shifts you flatten with the `--nu
 ```
 
 **Note:** running this on lxplus will give the following warnings:
->WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
->WARN DomainSocketFactory: The short-circuit local reads feature cannot be used because libhadoop cannot be loaded.
->WARN Client: Neither spark.yarn.jars nor spark.yarn.archive is set, falling back to uploading libraries under SPARK_HOME.
->WARN YarnSchedulerBackend$YarnSchedulerEndpoint: Attempted to request executors before the AM has registered!
->WARN TableMapping: /etc/hadoop/conf/topology.table.file cannot be read.
->java.io.FileNotFoundException: /etc/hadoop/conf/topology.table.file (No such file or directory)
->...
->WARN TableMapping: Failed to read topology table. /default-rack will be used for all nodes.
+
+>WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable  
+>WARN DomainSocketFactory: The short-circuit local reads feature cannot be used because libhadoop cannot be loaded.  
+>WARN Client: Neither spark.yarn.jars nor spark.yarn.archive is set, falling back to uploading libraries under SPARK_HOME.  
+>WARN YarnSchedulerBackend$YarnSchedulerEndpoint: Attempted to request executors before the AM has registered!  
+>WARN TableMapping: /etc/hadoop/conf/topology.table.file cannot be read.  
+>java.io.FileNotFoundException: /etc/hadoop/conf/topology.table.file (No such file or directory)  
+>...  
+>WARN TableMapping: Failed to read topology table. /default-rack will be used for all nodes.  
+
 and
->WARN Utils: Truncated the string representation of a plan since it was too large. This behavior can be adjusted by setting 'spark.debug.maxToStringFields' in SparkEnv.conf.
+
+>WARN Utils: Truncated the string representation of a plan since it was too large. This behavior can be adjusted by setting 'spark.debug.maxToStringFields' in SparkEnv.conf.  
+
 which can be safely ignored.
 
 ### Fit histograms
