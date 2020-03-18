@@ -3,7 +3,10 @@ import os
 import subprocess
 import itertools
 
-from muon_definitions import (definitions, binVariables, binning,
+from muon_definitions import (get_default_num_denom,
+                              get_data_mc_sub_eras,
+                              get_default_binning,
+                              get_default_binning_variables,
                               get_full_name, get_eff_name)
 
 
@@ -32,7 +35,8 @@ def run_single_fit(outFName, inFName, binName, templateFName, plotDir,
         print('Error processing', binName, fitType, histType)
 
 
-def build_fit_jobs(baseDir, **kwargs):
+def build_fit_jobs(particle, resonance, era, **kwargs):
+    _baseDir = kwargs.pop('baseDir', '')
     _numerator = kwargs.pop('numerator', [])
     _denominator = kwargs.pop('denominator', [])
     _fitType = kwargs.pop('fitType', [])
@@ -42,8 +46,12 @@ def build_fit_jobs(baseDir, **kwargs):
     doData = (not _sampleType) or ('data' in _sampleType)
     doMC = (not _sampleType) or ('mc' in _sampleType)
 
+    dataSubEra, mcSubEra = get_data_mc_sub_eras(resonance, era)
+
     jobs = []
     # iterate through the efficiencies
+    definitions = get_default_num_denom()
+    binning = get_default_binning()
     for num, denom in definitions:
         if _numerator and num not in _numerator:
             continue
@@ -51,7 +59,7 @@ def build_fit_jobs(baseDir, **kwargs):
             continue
 
         # iterate through the output binning structure
-        for variableLabels in binVariables:
+        for variableLabels in get_default_binning_variables():
             # iterate through the bin indices
             # this does nested for loops of the N-D binning (e.g. pt, eta)
             indices = [list(range(len(binning[variableLabel])-1))
@@ -62,32 +70,53 @@ def build_fit_jobs(baseDir, **kwargs):
                 if _efficiencyBin and binName not in _efficiencyBin:
                     continue
 
+                def get_jobs(fitType, shiftType, inType, outType):
+                    _jobs = []
+                    templateFName = os.path.join(_baseDir, 'flat',
+                                                 particle, resonance, era,
+                                                 mcSubEra, inType,
+                                                 binName+'.root')
+                    outFName = os.path.join(_baseDir, 'fits_data',
+                                            particle, resonance, era,
+                                            outType, effName,
+                                            binName+'.root')
+                    inFName = os.path.join(_baseDir, 'flat',
+                                           particle, resonance, era,
+                                           dataSubEra, inType,
+                                           binName+'.root')
+                    plotDir = os.path.join(_baseDir, 'plots',
+                                           particle, resonance, era,
+                                           'fits_data',
+                                           outType, effName)
+                    if doData:
+                        _jobs += [(outFName, inFName, binName, templateFName,
+                                   plotDir, fitType, 'data', shiftType)]
+                    outFName = os.path.join(_baseDir, 'fits_mc',
+                                            particle, resonance, era,
+                                            outType, effName,
+                                            binName+'.root')
+                    inFName = os.path.join(_baseDir, 'flat',
+                                           particle, resonance, era,
+                                           mcSubEra, inType,
+                                           binName+'.root')
+                    plotDir = os.path.join(_baseDir, 'plots',
+                                           particle, resonance, era,
+                                           'fits_mc',
+                                           outType, effName)
+                    if doMC:
+                        _jobs += [(outFName, inFName, binName, templateFName,
+                                   plotDir, fitType, 'mc', shiftType)]
+                    return _jobs
+
                 for fitType in ['Nominal', 'AltSig', 'AltBkg',
                                 'NominalOld', 'AltSigOld']:
                     if (_fitType or _shiftType):
                         if not (_fitType and fitType in _fitType):
                             continue
                     shiftType = 'Nominal'
-                    templateFName = os.path.join(baseDir, 'converted',
-                                                 'Nominal', 'dy.root')
-                    outFName = os.path.join(baseDir, 'fits_data', fitType,
-                                            effName, binName+'.root')
-                    inFName = os.path.join(baseDir, 'converted',
-                                           'Nominal', 'data.root')
-                    plotDir = os.path.join(baseDir, 'plots', 'fits_data',
-                                           fitType, effName)
-                    if doData:
-                        jobs += [(outFName, inFName, binName, templateFName,
-                                  plotDir, fitType, 'data', shiftType)]
-                    outFName = os.path.join(baseDir, 'fits_dy', fitType,
-                                            effName, binName+'.root')
-                    inFName = os.path.join(baseDir, 'converted',
-                                           'Nominal', 'dy.root')
-                    plotDir = os.path.join(baseDir, 'plots', 'fits_dy',
-                                           fitType, effName)
-                    if doMC:
-                        jobs += [(outFName, inFName, binName, templateFName,
-                                  plotDir, fitType, 'mc', shiftType)]
+                    inType = 'Nominal'
+                    outType = fitType
+                    jobs += get_jobs(fitType, shiftType, inType, outType)
 
                 for shiftType in ['tagIsoUp', 'tagIsoDown',
                                   'massBinUp', 'massBinDown',
@@ -95,29 +124,11 @@ def build_fit_jobs(baseDir, **kwargs):
                     if (_fitType or _shiftType):
                         if not (_shiftType and shiftType in _shiftType):
                             continue
+                    fitType = 'Nominal'
                     inType = 'Nominal'
                     if 'tagIso' in shiftType:
                         inType = shiftType
-                    fitType = 'Nominal'
-                    templateFName = os.path.join(baseDir, 'converted',
-                                                 inType, 'dy.root')
-                    outFName = os.path.join(baseDir, 'fits_data', shiftType,
-                                            effName, binName+'.root')
-                    inFName = os.path.join(baseDir, 'converted',
-                                           inType, 'data.root')
-                    plotDir = os.path.join(baseDir, 'plots', 'fits_data',
-                                           shiftType, effName)
-                    if doData:
-                        jobs += [(outFName, inFName, binName, templateFName,
-                                  plotDir, fitType, 'data', shiftType)]
-                    outFName = os.path.join(baseDir, 'fits_dy', shiftType,
-                                            effName, binName+'.root')
-                    inFName = os.path.join(baseDir, 'converted',
-                                           inType, 'dy.root')
-                    plotDir = os.path.join(baseDir, 'plots', 'fits_dy',
-                                           shiftType, effName)
-                    if doMC:
-                        jobs += [(outFName, inFName, binName, templateFName,
-                                  plotDir, fitType, 'mc', shiftType)]
+                    outType = shiftType
+                    jobs += get_jobs(fitType, shiftType, inType, outType)
 
     return jobs

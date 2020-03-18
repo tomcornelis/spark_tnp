@@ -11,6 +11,12 @@ from uproot_methods.classes import TH1
 from pyspark.sql import SparkSession
 
 from muon_definitions import (get_files, get_default_num_denom,
+                              get_default_ids, get_default_isos,
+                              get_default_denoms,
+                              get_default_fit_variable,
+                              get_default_binning,
+                              get_default_binning_variables,
+                              get_default_variable_name,
                               get_tag_dataframe, get_weighted_dataframe,
                               get_binned_dataframe,
                               get_default_selections_dataframe)
@@ -18,51 +24,21 @@ from muon_definitions import (get_files, get_default_num_denom,
 useParquet = True
 
 # bin definitions
-binning = {
-    'pt': np.array([15, 20, 25, 30, 40, 50, 60, 120]),
-    'abseta': np.array([0, 0.9, 1.2, 2.1, 2.4]),
-    'eta': np.array([-2.4, -2.1, -1.6, -1.2, -0.9, -0.3, -0.2,
-                     0.2, 0.3, 0.9, 1.2, 1.6, 2.1, 2.4]),
-    'nvtx': np.array(range(10, 85, 5)),
-    'njets': np.array([-0.5, 0.5, 1.5, 2.5, 3.5, 4.5]),
-    'mass': np.array(range(60, 131, 1)),
-}
-binning['mcMass'] = binning['mass']
-
-binning['mcMass'] = binning['mass']
+binning = get_default_binning()
 
 # efficiency definitions
-idLabels = ['LooseID', 'MediumID', 'MediumPromptID', 'TightID', 'SoftID']
-isoLabels = ['LooseRelIso', 'TightRelIso']
-idLabelsTuneP = ['HighPtID', 'TrkHighPtID']
-isoLabelsTuneP = ['LooseRelTkIso', 'TightRelTkIso']
-denomLabels = ['genTracks', 'TrackerMuons']
-
-# maps between custom variable names and names in tree
-variableMap = {
-    'nvtx': 'tag_nVertices',
-    'njets': 'pair_nJets30',
-}
-
-variableMapTuneP = {
-    'pt': 'pair_newTuneP_probe_pt',
-    'nvtx': 'tag_nVertices',
-    'njets': 'pair_nJets30',
-    'mass': 'pair_newTuneP_mass',
-}
+idLabels = get_default_ids()
+isoLabels = get_default_isos()
+idLabelsTuneP = get_default_ids(tuneP=True)
+isoLabelsTuneP = get_default_isos(tuneP=True)
+denomLabels = get_default_denoms()
 
 # the binnings to produce efficiencies in
-binVariables = [
-    ('abseta', 'pt', ),
-    # ('pt', ),
-    # ('eta', ),
-    # ('nvtx', ),
-    # ('njets', ),
-]
+binVariables = get_default_binning_variables()
 
 # the variable to fit
-fitVariable = 'mass'
-fitVariableGen = 'mcMass'
+fitVariable = get_default_fit_variable()
+fitVariableGen = get_default_fit_variable(gen=True)
 
 
 def get_eff_name(num, denom):
@@ -121,7 +97,7 @@ def run_conversion(spark, particle, resonance, era, subEra,
     else:
         jobPath = os.path.join('flat', jobPath)
     if _baseDir:
-        os.path.join(_baseDir, jobPath)
+        jobPath = os.path.join(_baseDir, jobPath)
     os.makedirs(jobPath, exist_ok=True)
 
     doGen = subEra in ['DY_madgraph']
@@ -157,10 +133,11 @@ def run_conversion(spark, particle, resonance, era, subEra,
     binnedDF = weightedDF
     for bName in binningSet:
         binnedDF = get_binned_dataframe(
-            binnedDF, bName+"Bin", variableMap.get(bName, bName),
+            binnedDF, bName+"Bin", get_default_variable_name(bName),
             binning[bName])
         binnedDF = get_binned_dataframe(
-            binnedDF, bName+"BinTuneP", variableMapTuneP.get(bName, bName),
+            binnedDF, bName+"BinTuneP",
+            get_default_variable_name(bName, tuneP=True),
             binning[bName])
 
     # create the id columns

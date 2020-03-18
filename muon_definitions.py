@@ -2,6 +2,7 @@ import os
 import glob
 import uproot
 import itertools
+import numpy as np
 from pyspark.sql import functions as F
 from pyspark.ml.feature import Bucketizer
 
@@ -52,6 +53,15 @@ def get_allowed_sub_eras(resonance, era):
     return subEras.get(resonance, {}).get(era, [])
 
 
+def get_data_mc_sub_eras(resonance, era):
+    eraMap = {
+        'Z': {
+            'Run2017_UL': ['Run2017', 'DY_madgraph'],
+        }
+    }
+    return eraMap.get(resonance, {}).get(era, [None, None])
+
+
 def get_files(resonance, era, subEra, useParquet=False):
     '''
     Get the list of centrally produced tag and probe trees.
@@ -63,7 +73,7 @@ def get_files(resonance, era, subEra, useParquet=False):
         # hdfs analytix
         def _UL17path(era):
             baseDir_Run2017_UL = 'parquet/Z/Run2017_UL'
-            return os.path.join(baseDir_Run2017_UL, era, 'tnp.parquet'),
+            return os.path.join(baseDir_Run2017_UL, era, 'tnp.parquet')
         fnamesMap = {
             'Z': {
                 'Run2017_UL': {
@@ -284,21 +294,89 @@ for num_denoms in _defs:
     for num, denom in itertools.product(*num_denoms):
         _definitions += [(num, denom)]
 
+# bin definitions
+_binning = {
+    'pt': np.array([15, 20, 25, 30, 40, 50, 60, 120]),
+    'abseta': np.array([0, 0.9, 1.2, 2.1, 2.4]),
+    'eta': np.array([-2.4, -2.1, -1.6, -1.2, -0.9, -0.3, -0.2,
+                     0.2, 0.3, 0.9, 1.2, 1.6, 2.1, 2.4]),
+    'nvtx': np.array(range(10, 85, 5)),
+    'njets': np.array([-0.5, 0.5, 1.5, 2.5, 3.5, 4.5]),
+    'mass': np.array(range(60, 131, 1)),
+}
+_binning['mcMass'] = _binning['mass']
 
-def get_default_ids():
+# maps between custom variable names and names in tree
+_variableMap = {
+    'nvtx': 'tag_nVertices',
+    'njets': 'pair_nJets30',
+}
+
+_variableMapTuneP = {
+    'pt': 'pair_newTuneP_probe_pt',
+    'nvtx': 'tag_nVertices',
+    'njets': 'pair_nJets30',
+    'mass': 'pair_newTuneP_mass',
+}
+
+# the binnings to produce efficiencies in
+_binVariables = [
+    ('abseta', 'pt', ),
+    # ('pt', ),
+    # ('eta', ),
+    # ('nvtx', ),
+    # ('njets', ),
+]
+
+# the variable to fit
+_fitVariable = 'mass'
+_fitVariableGen = 'mcMass'
+
+
+def get_default_fit_variable(gen=False):
+    '''
+    Return the fit variable
+    '''
+    return _fitVariableGen if gen else _fitVariable
+
+
+def get_default_binning():
+    '''
+    Return the default binning map
+    '''
+    return _binning
+
+
+def get_default_binning_variables():
+    '''
+    Return the binning variables used by the Muon POG
+    '''
+    return _binVariables
+
+
+def get_default_variable_name(variable, tuneP=False):
+    '''
+    Return the map between variable names and
+    name in the tree.
+    '''
+    _map = _variableMapTuneP if tuneP else _variableMap
+    return _map.get(variable, variable)
+
+
+def get_default_ids(tuneP=False):
     '''
     Returns the list of the Muon POG's
     officially supported IDs
     '''
-    return _idLabels + _idLabelsTuneP
+    return _idLabelsTuneP if tuneP else _idLabels
 
 
-def get_default_isos():
+def get_default_isos(tuneP=False):
     '''
     Returns the list of the Muon POG's
     officially supported isolations
     '''
-    return _isoLabels + _isoLabelsTuneP
+    return _isoLabelsTuneP if tuneP else _isoLabels
 
 
 def get_default_denoms():

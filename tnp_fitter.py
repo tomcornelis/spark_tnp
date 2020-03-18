@@ -138,7 +138,7 @@ def parse_command_line(argv):
     add_common_particle(parser_plot)
     add_common_resonance(parser_plot)
     add_common_era(parser_plot)
-    add_common_options(parser_fit)
+    add_common_options(parser_plot)
     add_common_multi(parser_plot)
     add_common_fit(parser_plot)
 
@@ -182,7 +182,8 @@ def main(argv=None):
         from fitter import run_single_fit, build_fit_jobs
         job_fn = run_single_fit
         jobs = build_fit_jobs(
-            baseDir,
+            args.particle, args.resonance, args.era,
+            baseDir=baseDir,
             numerator=args.numerator,
             denominator=args.denominator,
             fitType=args.fitType,
