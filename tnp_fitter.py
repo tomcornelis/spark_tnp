@@ -226,7 +226,7 @@ def main(argv=None):
         for job in tqdm(jobs, ncols=80, unit=unit, desc=desc):
             result = job_fn(*job)
             if add_fn is not None:
-                add_fn(output, result)
+                add_fn(output,result)
 
 
 if __name__ == "__main__":
