@@ -35,6 +35,27 @@ def run_single_fit(outFName, inFName, binName, templateFName, plotDir,
         print('Error processing', binName, fitType, histType)
 
 
+def build_condor_submit():
+
+    # for now, hard coded for lxplus
+    args = ['outFName', 'inFName', 'binName', 'templateFName',
+            'plotDir', 'version', 'histType', 'shiftType']
+    config = '''universe    = vanilla
+executable  = condor_wrapper.sh
+arguments   = ./run_single_fit.py {}
+transfer_input_files = env.sh,tnpFitter.py,run_single_fit.py
+output      = /dev/null
+error       = /dev/null
+log         = /dev/null
++JobFlavour = "espresso"
+queue {} from joblist.txt'''.format(
+        ' '.join([f'$({a})' for a in args]),
+        ','.join(args),
+    )
+
+    return config
+
+
 def build_fit_jobs(particle, resonance, era, **kwargs):
     _baseDir = kwargs.pop('baseDir', '')
     _numerator = kwargs.pop('numerator', [])

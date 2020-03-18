@@ -179,7 +179,7 @@ def main(argv=None):
                   shiftType=args.shiftType, baseDir=baseDir)
         return 0
     elif args.command == 'fit':
-        from fitter import run_single_fit, build_fit_jobs
+        from fitter import run_single_fit, build_fit_jobs, build_condor_submit
         job_fn = run_single_fit
         jobs = build_fit_jobs(
             args.particle, args.resonance, args.era,
@@ -208,15 +208,21 @@ def main(argv=None):
         unit = 'plot'
         desc = 'Plotting'
 
-    # TODO use condor or spark or parsl or dask...
     if args.dryrun:
         print('Will run {} {} jobs'.format(len(jobs), args.command))
     elif args.condor:
-        submit_dir = './'
+        submit_dir = ''
+        config = build_condor_submit()
+        configpath = os.path.join(submit_dir, 'condor.sub')
+        with open(configpath, 'w') as f:
+            f.write(config)
         joblist = os.path.join(submit_dir, 'joblist.txt')
         with open(joblist, 'w') as f:
             for job in jobs:
                 f.write(','.join([str(j) for j in job])+'\n')
+        print('Condor submit script written to {}'.format(configpath))
+        print('To submit:')
+        print('    condor_submit {}'.format(configpath))
     elif args.workers > 1:
         import concurrent.futures
         with concurrent.futures.ProcessPoolExecutor(args.workers) as executor:

@@ -130,6 +130,8 @@ dmypy.json
 
 # custom for this module
 flat/
+*.txt
+*.sub
 
 # ROOT macro build
 *.d
