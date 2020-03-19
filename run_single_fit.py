@@ -135,10 +135,7 @@ def hist_fitter(outFName, inFName, binName, templateFName, plotDir,
         fitter.set_fit_range(70, 130)
 
     # setup
-    try:
-        os.makedirs(os.path.dirname(outFName))
-    except OSError:
-        pass
+    os.makedirs(os.path.dirname(outFName), exist_ok=True)
 
     # generated Z LineShape
     # for high pT change the failing spectra to any probe to get statistics

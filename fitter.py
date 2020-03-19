@@ -7,7 +7,8 @@ from muon_definitions import (get_default_num_denom,
                               get_data_mc_sub_eras,
                               get_default_binning,
                               get_default_binning_variables,
-                              get_full_name, get_eff_name)
+                              get_full_name, get_eff_name,
+                              get_extended_eff_name)
 
 
 # This is (a lot) slower since every subprocess has to load ROOT.
@@ -16,10 +17,7 @@ from muon_definitions import (get_default_num_denom,
 def run_single_fit(outFName, inFName, binName, templateFName, plotDir,
                    fitType, histType, shiftType='Nominal'):
 
-    try:
-        os.makedirs(os.path.dirname(outFName))
-    except OSError:
-        pass
+    os.makedirs(os.path.dirname(outFName), exist_ok=True)
 
     try:
         # this allows us to save the output to a txt file
@@ -35,22 +33,29 @@ def run_single_fit(outFName, inFName, binName, templateFName, plotDir,
         print('Error processing', binName, fitType, histType)
 
 
-def build_condor_submit():
+def build_condor_submit(test=False):
 
     # for now, hard coded for lxplus
     args = ['outFName', 'inFName', 'binName', 'templateFName',
             'plotDir', 'version', 'histType', 'shiftType']
+    files = ['env.sh', 'TagAndProbeFitter.py', 'run_single_fit.py',
+             'RooCMSShape.cc', 'RooCMSShape.h']
     config = '''universe    = vanilla
 executable  = condor_wrapper.sh
 arguments   = ./run_single_fit.py {}
-transfer_input_files = env.sh,tnpFitter.py,run_single_fit.py
-output      = /dev/null
-error       = /dev/null
-log         = /dev/null
+transfer_input_files = {}
+output      = {}
+error       = {}
+log         = {}
 +JobFlavour = "espresso"
-queue {} from joblist.txt'''.format(
+queue {} from {}'''.format(
         ' '.join([f'$({a})' for a in args]),
+        ','.join(files),
+        'condor/job.$(ClusterId).$(ProcId).out' if test else '/dev/null',
+        'condor/job.$(ClusterId).$(ProcId).err' if test else '/dev/null',
+        'condor/job.$(ClusterId).$(ProcId).log' if test else '/dev/null',
         ','.join(args),
+        'test_joblist.txt' if test else 'joblist.txt',
     )
 
     return config
@@ -86,7 +91,10 @@ def build_fit_jobs(particle, resonance, era, **kwargs):
             indices = [list(range(len(binning[variableLabel])-1))
                        for variableLabel in variableLabels]
             for index in itertools.product(*indices):
+                # binning goes from 1 to N
+                index = [i+1 for i in index]
                 binName = get_full_name(num, denom, variableLabels, index)
+                extEffName = get_extended_eff_name(num, denom, variableLabels)
                 effName = get_eff_name(num, denom)
                 if _efficiencyBin and binName not in _efficiencyBin:
                     continue
@@ -96,7 +104,7 @@ def build_fit_jobs(particle, resonance, era, **kwargs):
                     templateFName = os.path.join(_baseDir, 'flat',
                                                  particle, resonance, era,
                                                  mcSubEra, inType,
-                                                 binName+'.root')
+                                                 extEffName+'.root')
                     outFName = os.path.join(_baseDir, 'fits_data',
                                             particle, resonance, era,
                                             outType, effName,
@@ -104,7 +112,7 @@ def build_fit_jobs(particle, resonance, era, **kwargs):
                     inFName = os.path.join(_baseDir, 'flat',
                                            particle, resonance, era,
                                            dataSubEra, inType,
-                                           binName+'.root')
+                                           extEffName+'.root')
                     plotDir = os.path.join(_baseDir, 'plots',
                                            particle, resonance, era,
                                            'fits_data',
@@ -119,7 +127,7 @@ def build_fit_jobs(particle, resonance, era, **kwargs):
                     inFName = os.path.join(_baseDir, 'flat',
                                            particle, resonance, era,
                                            mcSubEra, inType,
-                                           binName+'.root')
+                                           extEffName+'.root')
                     plotDir = os.path.join(_baseDir, 'plots',
                                            particle, resonance, era,
                                            'fits_mc',

@@ -211,12 +211,17 @@ def main(argv=None):
     if args.dryrun:
         print('Will run {} {} jobs'.format(len(jobs), args.command))
     elif args.condor:
+        test = False
         submit_dir = ''
-        config = build_condor_submit()
-        configpath = os.path.join(submit_dir, 'condor.sub')
+        config = build_condor_submit(test=test)
+        if test:
+            os.makedirs('condor', exist_ok=True)
+        configpath = os.path.join(
+            submit_dir, 'test_condor.sub' if test else 'condor.sub')
         with open(configpath, 'w') as f:
             f.write(config)
-        joblist = os.path.join(submit_dir, 'joblist.txt')
+        joblist = os.path.join(
+            submit_dir, 'test_joblist.txt' if test else 'joblist.txt')
         with open(joblist, 'w') as f:
             for job in jobs:
                 f.write(','.join([str(j) for j in job])+'\n')

@@ -8,8 +8,8 @@ class TagAndProbeFitter:
         self._name = name
         self._w = ROOT.RooWorkspace('w')
         self._useMinos = True
-        self.setFitVar()
-        self.setFitRange()
+        self.set_fit_var()
+        self.set_fit_range()
 
     def wsimport(self, *args):
         # getattr since import is special in python
