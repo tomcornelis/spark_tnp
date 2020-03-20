@@ -62,7 +62,32 @@ For help with the script run:
 
 ### Conversion to parquet
 
-TODO
+The conversion to parquet vastly speeds up the later steps.
+We will use [laurelin](https://github.com/spark-root/laurelin) to
+read the root files and then write them in the parquet data format.
+There are two possible approaches: using `k8s` and using `analytix`.
+
+Conversion with `k8s` currently only works if you are using [swan.cern.ch](swan.cern.ch).
+Use the [RootToParquet](notebooks/RootToParquet.ipynb) notebook as a guide.
+The output should be writting to `analytix`.
+
+Conversion with `analytix` requires you to first copy your root files
+to `hdfs://analytix`. There is an issue with reading root files from `eos`
+on `analytix` that needs to be understood.
+
+```bash
+hdfs dfs -cp root://eoscms.cern.ch//eos/cms/store/[path-to-files]/*.root hdfs://analytix/[path-to-out-dir]
+```
+
+Once copied, you can use:
+
+```bash
+./tnp_fitter.py convert [particle] [resonance] [era]
+```
+
+**Note:** this will currently raise a `NotImplemented` exception.
+You can look at [converter.py](converter.py) for how to run things
+until it is incorporated.
 
 ### Flatten histograms with spark
 
