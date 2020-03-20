@@ -130,8 +130,12 @@ dmypy.json
 
 # custom for this module
 flat/
+condor/
 *.txt
 *.sub
+
+# jar files from spark
+*.jar
 
 # ROOT macro build
 *.d
