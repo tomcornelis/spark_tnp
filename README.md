@@ -69,14 +69,22 @@ There are two possible approaches: using `k8s` and using `analytix`.
 
 Conversion with `k8s` currently only works if you are using [swan.cern.ch](swan.cern.ch).
 Use the [RootToParquet](notebooks/RootToParquet.ipynb) notebook as a guide.
-The output should be writting to `analytix`.
+The output should be written to `analytix`.
 
 Conversion with `analytix` requires you to first copy your root files
 to `hdfs://analytix`. There is an issue with reading root files from `eos`
 on `analytix` that needs to be understood.
+The following should be executed when you are connected to the edge node.
 
 ```bash
 hdfs dfs -cp root://eoscms.cern.ch//eos/cms/store/[path-to-files]/*.root hdfs://analytix/[path-to-out-dir]
+```
+
+Additionally, you will need to download the `jar` files to add
+to the spark executors:
+
+```bash
+bash setup.sh
 ```
 
 Once copied, you can use:
