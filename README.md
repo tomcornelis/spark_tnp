@@ -167,3 +167,24 @@ See documentation with:
 ### Extract scale factors
 
 TODO
+
+## Utilities
+
+The [make_pileup.py](make_pileup.py) script produced the pileup distribution in MC.
+This part requires a CMSSW environment sourced.
+
+To make the data pileup, copy the latest PileupHistogram from:
+```bash
+/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/{COLLISION_ERA}/{ENERGY}/PileUp/PileupHistogram-{...}.root
+```
+You should grab the `69200ub` version. If you wish to explore systematic uncertainties
+in the choice of the minbias cross section, use the up (`66000ub`) and down (`72400`) histograms.
+
+Alternatively, you can make it yourself with (e.g. Run2017):
+```bash
+lumimask=/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/ReReco/Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON.txt
+pileupjson=/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/PileUp/pileup_latest.txt
+xsec=69200
+maxBins=100
+pileupCalc.py -i $lumimask --inputLumiJSON $pileupjson --calcMode true  --minBiasXsec $xsec --maxPileupBin $maxBins --numPileupBins $maxBins pileup/data/Run2017.root
+```
