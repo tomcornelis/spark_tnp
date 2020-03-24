@@ -4,7 +4,11 @@ import os
 import sys
 import argparse
 import getpass
-from tqdm.auto import tqdm
+try:
+    from tqdm.auto import tqdm
+    hasTQDM = True
+except ImportError:
+    hasTQDM = False
 
 from muon_definitions import get_allowed_resonances, get_allowed_eras
 
@@ -12,21 +16,32 @@ from muon_definitions import get_allowed_resonances, get_allowed_eras
 # parallel processing
 def _futures_handler(futures_set, status=True, unit='items', desc='Processing',
                      add_fn=None, output=None):
-    from tqdm.auto import tqdm
+    try:
+        from tqdm.auto import tqdm
+        hasTQDM = True
+    except ImportError:
+        hasTQDM = False
     import time
 
-    try:
-        with tqdm(disable=not status, unit=unit, total=len(futures_set),
-                  desc=desc, ncols=80) as pbar:
-            while len(futures_set) > 0:
-                finished = set(job for job in futures_set if job.done())
-                futures_set.difference_update(finished)
-                while finished:
-                    res = finished.pop().result()
-                    if add_fn:
-                        add_fn(output, res)
+    def _handle(pbar=None):
+        while len(futures_set) > 0:
+            finished = set(job for job in futures_set if job.done())
+            futures_set.difference_update(finished)
+            while finished:
+                res = finished.pop().result()
+                if add_fn:
+                    add_fn(output, res)
+                if pbar is not None:
                     pbar.update(1)
-                time.sleep(0.5)
+            time.sleep(0.5)
+
+    try:
+        if hasTQDM:
+            with tqdm(disable=not status, unit=unit, total=len(futures_set),
+                      desc=desc, ncols=80) as pbar:
+                _handle(pbar)
+        else:
+            _handle()
     except KeyboardInterrupt:
         for job in futures_set:
             job.cancel()
@@ -235,10 +250,16 @@ def main(argv=None):
             _futures_handler(futures, status=True, unit=unit, desc=desc,
                              add_fn=add_fn, output=output)
     else:
-        for job in tqdm(jobs, ncols=80, unit=unit, desc=desc):
-            result = job_fn(*job)
-            if add_fn is not None:
-                add_fn(output, result)
+        if hasTQDM:
+            for job in tqdm(jobs, ncols=80, unit=unit, desc=desc):
+                result = job_fn(*job)
+                if add_fn is not None:
+                    add_fn(output, result)
+        else:
+            for job in jobs:
+                result = job_fn(*job)
+                if add_fn is not None:
+                    add_fn(output, result)
 
 
 if __name__ == "__main__":

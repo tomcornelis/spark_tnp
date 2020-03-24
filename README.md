@@ -44,6 +44,14 @@ Setup the environment:
 source env.sh
 ```
 
+### Optional
+
+Instal `tqdm` packaged for a nice progressbar.
+
+```bash
+pip install --user tqdm
+```
+
 ## Tag-and-probe steps
 
 The tag-and-probe process is broken down into several parts:
