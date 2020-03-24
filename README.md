@@ -170,6 +170,7 @@ TODO
 
 ## Utilities
 
+### Pileup
 The [make_pileup.py](make_pileup.py) script produced the pileup distribution in MC.
 This part requires a CMSSW environment sourced.
 
@@ -178,7 +179,7 @@ To make the data pileup, copy the latest PileupHistogram from:
 /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/{COLLISION_ERA}/{ENERGY}/PileUp/PileupHistogram-{...}.root
 ```
 You should grab the `69200ub` version. If you wish to explore systematic uncertainties
-in the choice of the minbias cross section, use the up (`66000ub`) and down (`72400`) histograms.
+in the choice of the minbias cross section, use the up (`66000ub`) and down (`72400ub`) histograms.
 
 Alternatively, you can make it yourself with (e.g. Run2017):
 ```bash
