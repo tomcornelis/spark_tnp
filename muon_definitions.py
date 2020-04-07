@@ -22,6 +22,7 @@ def get_allowed_eras(resonance):
         'Z': [
             # ultra legacy
             'Run2017_UL',
+            'Run2018_UL',
             # rereco
             # 'Run2016',
             # 'Run2017',
@@ -39,6 +40,8 @@ def get_allowed_sub_eras(resonance, era):
             # ultra legacy
             'Run2017_UL': ['Run2017'] + [
                 f'Run2017{b}' for b in 'BCDEF']+['DY_madgraph'],
+            'Run2018_UL': ['Run2018'] + [
+                f'Run2018{b}' for b in 'ABCD']+['DY_madgraph', 'DY_powheg'],
             # rereco
             # 'Run2016': ['Run2016'] + [
             #    f'Run2016{b}' for b in 'BCDEFGH']+['DY_madgraph'],
@@ -74,6 +77,10 @@ def get_files(resonance, era, subEra, useParquet=False):
         def _UL17path(era):
             baseDir_Run2017_UL = 'parquet/Z/Run2017_UL'
             return os.path.join(baseDir_Run2017_UL, era, 'tnp.parquet')
+
+        def _UL18path(era):
+            baseDir_Run2018_UL = 'parquet/Z/Run2018_UL'
+            return os.path.join(baseDir_Run2018_UL, era, 'tnp.parquet')
         fnamesMap = {
             'Z': {
                 'Run2017_UL': {
@@ -84,6 +91,14 @@ def get_files(resonance, era, subEra, useParquet=False):
                     'Run2017F': _UL17path('Run2017F'),
                     'DY_madgraph': _UL17path('DY_madgraph'),
                 },
+                'Run2018_UL': {
+                    'Run2018A': _UL18path('Run2018A'),
+                    'Run2018B': _UL18path('Run2018B'),
+                    'Run2018C': _UL18path('Run2018C'),
+                    'Run2018D': _UL18path('Run2018D'),
+                    'DY_madgraph': _UL18path('DY_madgraph'),
+                    'DY_powheg': _UL18path('DY_powheg'),
+                },
             },
             'JPsi': {
             },
@@ -91,13 +106,23 @@ def get_files(resonance, era, subEra, useParquet=False):
         fnamesMap['Z']['Run2017_UL']['Run2017'] = [
             fnamesMap['Z']['Run2017_UL']['Run2017{}'.format(x)]
             for x in 'BCDEF']
+        fnamesMap['Z']['Run2018_UL']['Run2018'] = [
+            fnamesMap['Z']['Run2018_UL']['Run2018{}'.format(x)]
+            for x in 'ABCD']
         fnames = fnamesMap.get(resonance, {}).get(era, {}).get(subEra, '')
     else:
         def _UL17path(era):
-            baseDir_Run2017_UL = os.path.join('/eos/cms/store/group/phys_muon',
-                                              'TagAndProbe/ULRereco/2017/102X')
+            baseDir = os.path.join('/eos/cms/store/group/phys_muon',
+                                   'TagAndProbe/ULRereco/2017/102X')
             return [f for f in glob.glob(
-                os.path.join(baseDir_Run2017_UL, era, 'tnpZ*.root'))
+                os.path.join(baseDir, era, 'tnpZ*.root'))
+                if 'hadd' not in f]
+
+        def _UL18path(era):
+            baseDir = os.path.join('/eos/cms/store/group/phys_muon',
+                                   'TagAndProbe/ULRereco/2018/102X')
+            return [f for f in glob.glob(
+                os.path.join(baseDir, era, 'tnpZ*.root'))
                 if 'hadd' not in f]
         fnamesMap = {
             'Z': {
@@ -108,6 +133,14 @@ def get_files(resonance, era, subEra, useParquet=False):
                     'Run2017E': _UL17path('Run2017E_99Percent'),
                     'Run2017F': _UL17path('Run2017F_99Percent'),
                     'DY_madgraph': _UL17path('DY_M50_pdfwgt'),
+                },
+                'Run2018_UL': {
+                    'Run2018A': _UL18path('SingleMuon_Run2018A_98Percent'),
+                    'Run2018B': _UL18path('SingleMuon_Run2018B_80Percent'),
+                    'Run2018C': _UL18path('SingleMuon_Run2018C'),
+                    'Run2018D': _UL18path('SingleMuon_Run2018D_98Percent'),
+                    'DY_madgraph': _UL18path('DY_M50_Madgraph'),
+                    'DY_powheg': _UL18path('DY_M50to120_Powheg'),
                 },
             },
             'JPsi': {
