@@ -135,10 +135,10 @@ def get_files(resonance, era, subEra, useParquet=False):
                     'DY_madgraph': _UL17path('DY_M50_pdfwgt'),
                 },
                 'Run2018_UL': {
-                    'Run2018A': _UL18path('SingleMuon_Run2018A_98Percent'),
-                    'Run2018B': _UL18path('SingleMuon_Run2018B_80Percent'),
+                    'Run2018A': _UL18path('SingleMuon_Run2018A'),
+                    'Run2018B': _UL18path('SingleMuon_Run2018B'),
                     'Run2018C': _UL18path('SingleMuon_Run2018C'),
-                    'Run2018D': _UL18path('SingleMuon_Run2018D_98Percent'),
+                    'Run2018D': _UL18path('SingleMuon_Run2018D'),
                     'DY_madgraph': _UL18path('DY_M50_Madgraph'),
                     'DY_powheg': _UL18path('DY_M50to120_Powheg'),
                 },
