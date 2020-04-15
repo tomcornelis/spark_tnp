@@ -24,9 +24,9 @@ def get_allowed_eras(resonance):
             'Run2017_UL',
             'Run2018_UL',
             # rereco
-            # 'Run2016',
-            # 'Run2017',
-            # 'Run2018',
+            'Run2016',
+            'Run2017',
+            'Run2018',
         ],
         'JPsi': [
         ],
@@ -43,12 +43,12 @@ def get_allowed_sub_eras(resonance, era):
             'Run2018_UL': ['Run2018'] + [
                 f'Run2018{b}' for b in 'ABCD']+['DY_madgraph', 'DY_powheg'],
             # rereco
-            # 'Run2016': ['Run2016'] + [
-            #    f'Run2016{b}' for b in 'BCDEFGH']+['DY_madgraph'],
-            # 'Run2017': ['Run2017'] + [
-            #    f'Run2017{b}' for b in 'BCDEF']+['DY_madgraph'],
-            # 'Run2018': ['Run2018'] + [
-            #    f'Run2018{b}' for b in 'ABCD']+['DY_madgraph'],
+            'Run2016': ['Run2016'] + [
+               f'Run2016{b}' for b in 'BCDEFGH']+['DY_madgraph'],
+            'Run2017': ['Run2017'] + [
+               f'Run2017{b}' for b in 'BCDEF']+['DY_madgraph'],
+            'Run2018': ['Run2018'] + [
+               f'Run2018{b}' for b in 'ABCD']+['DY_madgraph'],
         },
         'JPsi': {
         },
@@ -59,7 +59,14 @@ def get_allowed_sub_eras(resonance, era):
 def get_data_mc_sub_eras(resonance, era):
     eraMap = {
         'Z': {
+            # ultra legacy
             'Run2017_UL': ['Run2017', 'DY_madgraph'],
+            # TODO: decide how to handle alternate generators
+            'Run2018_UL': ['Run2018', 'DY_madgraph'],
+            # rereco
+            'Run2016': ['Run2017', 'DY_madgraph'],
+            'Run2017': ['Run2017', 'DY_madgraph'],
+            'Run2018': ['Run2017', 'DY_madgraph'],
         }
     }
     return eraMap.get(resonance, {}).get(era, [None, None])
@@ -74,43 +81,31 @@ def get_files(resonance, era, subEra, useParquet=False):
     # Configure the efficiencies
     if useParquet:
         # hdfs analytix
-        def _UL17path(era):
-            baseDir_Run2017_UL = 'parquet/Z/Run2017_UL'
-            return os.path.join(baseDir_Run2017_UL, era, 'tnp.parquet')
-
-        def _UL18path(era):
-            baseDir_Run2018_UL = 'parquet/Z/Run2018_UL'
-            return os.path.join(baseDir_Run2018_UL, era, 'tnp.parquet')
+        def _hdfs_path(resonance, era, subEra):
+            baseDir = '/cms/muon_pog/parquet'
+            return os.path.join(baseDir, resonance, era, subEra, 'tnp.parquet')
+        # this is always the same, so automate it
         fnamesMap = {
-            'Z': {
-                'Run2017_UL': {
-                    'Run2017B': _UL17path('Run2017B'),
-                    'Run2017C': _UL17path('Run2017C'),
-                    'Run2017D': _UL17path('Run2017D'),
-                    'Run2017E': _UL17path('Run2017E'),
-                    'Run2017F': _UL17path('Run2017F'),
-                    'DY_madgraph': _UL17path('DY_madgraph'),
-                },
-                'Run2018_UL': {
-                    'Run2018A': _UL18path('Run2018A'),
-                    'Run2018B': _UL18path('Run2018B'),
-                    'Run2018C': _UL18path('Run2018C'),
-                    'Run2018D': _UL18path('Run2018D'),
-                    'DY_madgraph': _UL18path('DY_madgraph'),
-                    'DY_powheg': _UL18path('DY_powheg'),
-                },
-            },
-            'JPsi': {
-            },
+            resonance: {
+                era: {
+                    subEra: _hdfs_path(resonance, era, subEra)
+                    for subEra in get_allowed_sub_eras(resonance, era)
+                } for era in get_allowed_eras(resonance)
+            } for resonance in get_allowed_resonances()
         }
-        fnamesMap['Z']['Run2017_UL']['Run2017'] = [
-            fnamesMap['Z']['Run2017_UL']['Run2017{}'.format(x)]
-            for x in 'BCDEF']
-        fnamesMap['Z']['Run2018_UL']['Run2018'] = [
-            fnamesMap['Z']['Run2018_UL']['Run2018{}'.format(x)]
-            for x in 'ABCD']
+        # then we need to replace the data RunXXXX with a list
+        # of all the data sub eras
+        for resonance in fnamesMap:
+            for era in fnamesMap[resonance]:
+                combined = era.split('_')[0]
+                subEras = [k for k in fnamesMap[resonance][era].keys()
+                           if k != combined and k.startswith(combined)]
+                fnamesMap[resonance][era][combined] = [
+                    fnamesMap[resonance][era][subEra]
+                    for subEra in subEras]
         fnames = fnamesMap.get(resonance, {}).get(era, {}).get(subEra, '')
     else:
+        # there is no good pattern for these, manually set them all
         def _UL17path(era):
             baseDir = os.path.join('/eos/cms/store/group/phys_muon',
                                    'TagAndProbe/ULRereco/2017/102X')
@@ -124,6 +119,16 @@ def get_files(resonance, era, subEra, useParquet=False):
             return [f for f in glob.glob(
                 os.path.join(baseDir, era, 'tnpZ*.root'))
                 if 'hadd' not in f]
+
+        # for these, I have split the merged root files into
+        # smaller chuncks for processing
+        # the exception is DY for ReReco 2016, which was already split
+        # NOTE: No promise that these will be kept on disk
+        def _split_path(resonance, era, subEra):
+            baseDir = os.path.join('/eos/cms/store/group/phys_muon',
+                                   'dntaylor/TagAndProbe_split')
+            return glob.glob(os.path.join(baseDir, resonance, era,
+                                          subEra, '*.root'))
         fnamesMap = {
             'Z': {
                 'Run2017_UL': {
@@ -147,6 +152,22 @@ def get_files(resonance, era, subEra, useParquet=False):
             },
         }
 
+        for resonance in ['Z']:
+            for era in ['Run2016', 'Run2017', 'Run2018']:
+                fnamesMap[resonance][era] = {}
+                for subEra in get_allowed_sub_eras(resonance, era):
+                    if era == subEra:
+                        continue
+                    fnamesMap[resonance][era][subEra] = _split_path(
+                        resonance, era, subEra)
+        # override Run2016 DY_madgraph
+        fnamesMap['Z']['Run2016']['DY_madgraph'] = glob.glob(
+            os.path.join(
+                '/eos/cms/store/group/phys_muon/hbrun',
+                'muonPOGtnpTrees/MCDR80X/DY_Summer16PremixMoriond/*.root'
+            )
+        )
+
         fnames = ['root://eoscms.cern.ch/'+f for f in
                   fnamesMap.get(resonance, {}).get(era, {}).get(subEra, [])]
 
@@ -166,10 +187,12 @@ def get_pileup(resonance, era, subEra):
         # Centrally produced:
         # /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/PileUp/PileupHistogram-goldenJSON-13tev-2017-69200ub.root
         'Run2017_UL': 'pileup/data/Run2017.root',
+        'Run2018_UL': 'pileup/data/Run2018.root',
     }
     mcPileup = {
         # SimGeneral/MixingModule/python/mix_2017_25ns_UltraLegacy_PoissonOOTPU_cfi.py
         'Run2017_UL': 'pileup/mc/Run2017_UL.root',
+        'Run2018_UL': 'pileup/mc/Run2018_UL.root',
     }
     with uproot.open(dataPileup[era]) as f:
         data_edges = f['pileup'].edges

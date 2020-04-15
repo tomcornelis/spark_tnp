@@ -100,7 +100,7 @@ def run_conversion(spark, particle, resonance, era, subEra,
         jobPath = os.path.join(_baseDir, jobPath)
     os.makedirs(jobPath, exist_ok=True)
 
-    doGen = subEra in ['DY_madgraph']
+    doGen = subEra in ['DY_madgraph', 'DY_powheg']
 
     # default numerator/denominator defintions
     definitions = get_default_num_denom()
@@ -278,6 +278,7 @@ subEras = {
     'Z': {
         # ultra legacy
         'Run2017_UL': ['Run2017', 'DY_madgraph'],
+        'Run2018_UL': ['Run2018', 'DY_madgraph', 'DY_powheg'],
         # alternatively split by data taking era
         # 'Run2017_UL': [f'Run2017{b}' for b in 'BCDEF']+['DY_madgraph'],
     },
