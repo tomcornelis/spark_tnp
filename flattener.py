@@ -83,6 +83,7 @@ def run_conversion(spark, particle, resonance, era, subEra,
     _baseDir = kwargs.pop('baseDir', '')
 
     testing = False
+    print('Running conversion for', resonance, era, subEra, shift)
 
     fnames = get_files(resonance, era, subEra, useParquet)
 
@@ -107,6 +108,7 @@ def run_conversion(spark, particle, resonance, era, subEra,
 
     # get the dataframe
     if useParquet:
+        print('Loading parquet files:', fnames)
         if isinstance(fnames, list):
             baseDF = spark.read.parquet(*fnames)
         else:

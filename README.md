@@ -44,9 +44,14 @@ Setup the environment:
 source env.sh
 ```
 
+**Note**: Do not forget to make sure you have a valid kerberos token with:
+```bash
+kinit
+```
+
 ### Optional
 
-Instal `tqdm` packaged for a nice progressbar.
+Install `tqdm` packaged for a nice progressbar.
 
 ```bash
 pip install --user tqdm
