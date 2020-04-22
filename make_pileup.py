@@ -23,6 +23,18 @@ elif args.era == 'Run2018_UL':
     from SimGeneral\
         .MixingModule\
         .mix_2018_25ns_UltraLegacy_PoissonOOTPU_cfi import mix
+elif args.era == 'Run2016':
+    from SimGeneral\
+        .MixingModule\
+        .mix_2016_25ns_Moriond17MC_PoissonOOTPU_cfi import mix
+elif args.era == 'Run2017':
+    from SimGeneral\
+        .MixingModule\
+        .mix_2017_25ns_WinterMC_PUScenarioV1_PoissonOOTPU_cfi import mix
+elif args.era == 'Run2018':
+    from SimGeneral\
+        .MixingModule\
+        .mix_2018_25ns_JuneProjectionFull18_PoissonOOTPU_cfi import mix
 else:
     print('Unrecognized era', args.era)
     sys.exit(0)

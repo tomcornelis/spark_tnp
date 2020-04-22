@@ -197,18 +197,20 @@ def get_pileup(resonance, era, subEra):
     '''
     # get the pileup
     dataPileup = {
-        # Use ReReco golden json:
-        # /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/ReReco/Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON.txt
-        # /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/PileUp/pileup_latest.txt
-        # Centrally produced:
-        # /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/PileUp/PileupHistogram-goldenJSON-13tev-2017-69200ub.root
+        # Note: for now use ReReco version of pileup
+        'Run2016_UL': 'pileup/data/Run2016.root',
         'Run2017_UL': 'pileup/data/Run2017.root',
         'Run2018_UL': 'pileup/data/Run2018.root',
+        'Run2016': 'pileup/data/Run2016.root',
+        'Run2017': 'pileup/data/Run2017.root',
+        'Run2018': 'pileup/data/Run2018.root',
     }
     mcPileup = {
-        # SimGeneral/MixingModule/python/mix_2017_25ns_UltraLegacy_PoissonOOTPU_cfi.py
         'Run2017_UL': 'pileup/mc/Run2017_UL.root',
         'Run2018_UL': 'pileup/mc/Run2018_UL.root',
+        'Run2016': 'pileup/mc/Run2016.root',
+        'Run2017': 'pileup/mc/Run2017.root',
+        'Run2018': 'pileup/mc/Run2018.root',
     }
     with uproot.open(dataPileup[era]) as f:
         data_edges = f['pileup'].edges
