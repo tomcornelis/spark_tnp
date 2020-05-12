@@ -177,15 +177,19 @@ _parquet_sta_fnamesMap = _build_parquet_file_lists(standalone=True)
 _root_fnamesMap = _build_root_file_lists()
 
 
-def get_files(resonance, era, subEra, useParquet=False):
+def get_files(resonance, era, subEra, useParquet=False, standalone=False):
     '''
     Get the list of centrally produced tag and probe trees.
     Some datasets have been converted to the parquet format
     (which is much more efficient).
     '''
     if useParquet:
-        fnames = _parquet_fnamesMap.get(
-            resonance, {}).get(era, {}).get(subEra, '')
+        if standalone:
+            fnames = _parquet_sta_fnamesMap.get(
+                resonance, {}).get(era, {}).get(subEra, '')
+        else:
+            fnames = _parquet_fnamesMap.get(
+                resonance, {}).get(era, {}).get(subEra, '')
     else:
 
         fnames = [
