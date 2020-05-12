@@ -222,6 +222,10 @@ def get_pileup(resonance, era, subEra):
         'Run2017': 'pileup/mc/Run2017.root',
         'Run2018': 'pileup/mc/Run2018.root',
     }
+    # get absolute path
+    baseDir = os.path.dirname(__file__)
+    dataPileup = {k: os.path.join(baseDir, dataPileup[k]) for k in dataPileup}
+    mcPileup = {k: os.path.join(baseDir, mcPileup[k]) for k in mcPileup}
     with uproot.open(dataPileup[era]) as f:
         data_edges = f['pileup'].edges
         data_pileup = f['pileup'].values
