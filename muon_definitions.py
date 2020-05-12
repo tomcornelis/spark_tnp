@@ -73,11 +73,16 @@ def get_data_mc_sub_eras(resonance, era):
 
 
 # build the file lists once
-def _build_parquet_file_lists():
+def _build_parquet_file_lists(standalone=False):
     # hdfs analytix
     def _hdfs_path(resonance, era, subEra):
         baseDir = '/cms/muon_pog/parquet'
-        return os.path.join(baseDir, resonance, era, subEra, 'tnp.parquet')
+        if standalone:
+            return os.path.join(
+                baseDir, resonance, era, subEra, 'tnpSta.parquet')
+        else:
+            return os.path.join(
+                baseDir, resonance, era, subEra, 'tnp.parquet')
     # this is always the same, so automate it
     fnamesMap = {
         _r: {
@@ -168,6 +173,7 @@ def _build_root_file_lists():
 
 
 _parquet_fnamesMap = _build_parquet_file_lists()
+_parquet_sta_fnamesMap = _build_parquet_file_lists(standalone=True)
 _root_fnamesMap = _build_root_file_lists()
 
 
