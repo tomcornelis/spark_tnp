@@ -108,13 +108,13 @@ def hist_fitter(outFName, inFName, binName, templateFName, plotDir,
 
     def rebin(hP, hF):
         if shiftType == 'massBinUp':
-            pass  # no rebin, bin widths are 0.5 GeV
+            pass  # no rebin, bin widths are 0.25 GeV
         elif shiftType == 'massBinDown':
-            hP = hP.Rebin(3)  # 1.5 GeV bins
-            hF = hF.Rebin(3)  # 1.5 GeV bins
+            hP = hP.Rebin(4)  # 1.0 GeV bins
+            hF = hF.Rebin(4)  # 1.0 GeV bins
         else:
-            hP = hP.Rebin(2)  # 1.0 GeV bins
-            hF = hF.Rebin(2)  # 1.0 GeV bins
+            hP = hP.Rebin(2)  # 0.5 GeV bins
+            hF = hF.Rebin(2)  # 0.5 GeV bins
         return hP, hF
 
     # init fitter

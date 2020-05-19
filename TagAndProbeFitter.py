@@ -1,3 +1,4 @@
+from array import array
 import ROOT
 ROOT.gROOT.SetBatch()
 
@@ -151,6 +152,7 @@ class TagAndProbeFitter:
                                 )
 
         # plot
+        # need to run chi2 before drawing bkg component
         pFrame = self._w.var(self._fitVar).frame(
             self._fitRangeMin, self._fitRangeMax)
         pFrame.SetTitle('Passing probes')
@@ -158,6 +160,8 @@ class TagAndProbeFitter:
         self._w.pdf('pdfPass').plotOn(pFrame,
                                       ROOT.RooFit.LineColor(ROOT.kRed),
                                       )
+        ndofp = resPass.floatParsFinal().getSize()
+        chi2p = pFrame.chiSquare(ndofp)
         self._w.pdf('pdfPass').plotOn(pFrame,
                                       ROOT.RooFit.Components('bkgPass'),
                                       ROOT.RooFit.LineColor(ROOT.kBlue),
@@ -172,12 +176,25 @@ class TagAndProbeFitter:
         self._w.pdf('pdfFail').plotOn(fFrame,
                                       ROOT.RooFit.LineColor(ROOT.kRed),
                                       )
+        ndoff = resFail.floatParsFinal().getSize()
+        chi2f = fFrame.chiSquare(ndoff)
         self._w.pdf('pdfFail').plotOn(fFrame,
                                       ROOT.RooFit.Components('bkgFail'),
                                       ROOT.RooFit.LineColor(ROOT.kBlue),
                                       ROOT.RooFit.LineStyle(ROOT.kDashed),
                                       )
         self._w.data('hFail').plotOn(fFrame)
+
+        # gof tests
+        statTests = ROOT.TTree('statTests', 'statTests')
+        branches = {}
+        branches['chi2P'] = array('f', [0])
+        branches['chi2F'] = array('f', [0])
+        for b in branches:
+            statTests.Branch(b, branches[b], '{}/F'.format(b))
+        branches['chi2P'][0] = chi2p
+        branches['chi2F'][0] = chi2f
+        statTests.Fill()
 
         # make canvas
         canvas = ROOT.TCanvas('c', 'c', 1100, 450)
@@ -250,8 +267,12 @@ class TagAndProbeFitter:
 
         # save
         out = ROOT.TFile.Open(outFName, 'RECREATE')
+        self._w.Write('{}_workspace'.format(self._name),
+                      ROOT.TObject.kOverwrite)
         canvas.Write('{}_Canv'.format(self._name), ROOT.TObject.kOverwrite)
         resPass.Write('{}_resP'.format(self._name), ROOT.TObject.kOverwrite)
         resFail.Write('{}_resF'.format(self._name), ROOT.TObject.kOverwrite)
+        statTests.Write('{}_statTests'.format(self._name),
+                        ROOT.TObject.kOverwrite)
         out.Close()
         canvas.Print(outFName.replace('.root', '.png'))
