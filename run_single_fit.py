@@ -14,12 +14,12 @@ def hist_fitter(outFName, inFName, binName, templateFName, plotDir,
                 version='Nominal', histType='data', shiftType='Nominal'):
 
     tnpNomFit = [
-        "meanP[-0.0, -5.0, 5.0]", "sigmaP[0.9, 0.5, 5.0]",
-        "meanF[-0.0, -5.0, 5.0]", "sigmaF[0.9, 0.5, 5.0]",
-        "acmsP[60., 50., 90.]", "betaP[0.05, 0.01, 0.08]",
-        "gammaP[0.1, -2, 2]", "peakP[90.0]",
-        "acmsF[60., 50., 90.]", "betaF[0.05, 0.01, 0.08]",
-        "gammaF[0.1, -2, 2]", "peakF[90.0]",
+        "meanP[-0.0, -5.0, 5.0]", "sigmaP[0.9, 0.05, 5.0]",
+        "meanF[-0.0, -5.0, 5.0]", "sigmaF[0.9, 0.05, 5.0]",
+        "acmsP[60., 50., 190.]", "betaP[0.05, 0.01, 0.08]",
+        "gammaP[0.1, -2, 2]", "peakP[91.0]",
+        "acmsF[60., 50., 190.]", "betaF[0.05, 0.01, 0.08]",
+        "gammaF[0.1, -2, 2]", "peakF[91.0]",
         "Gaussian::sigResPass(x, meanP, sigmaP)",
         "Gaussian::sigResFail(x, meanF, sigmaF)",
         "RooCMSShape::bkgPass(x, acmsP, betaP, gammaP, peakP)",

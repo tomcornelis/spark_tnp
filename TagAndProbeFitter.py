@@ -110,6 +110,12 @@ class TagAndProbeFitter:
         self._w.factory("SUM::pdfPass(nSigP*sigPass, nBkgP*bkgPass)")
         self._w.factory("SUM::pdfFail(nSigF*sigFail, nBkgF*bkgFail)")
 
+        # import the class code in case of non-standard PDFs
+        self._w.importClassCode("bkgPass")
+        self._w.importClassCode("bkgFail")
+        self._w.importClassCode("sigPass")
+        self._w.importClassCode("sigFail")
+
     def fit(self, outFName, mcTruth=False, template=True):
 
         pdfPass = self._w.pdf('pdfPass')
@@ -169,7 +175,8 @@ class TagAndProbeFitter:
         self._w.pdf('pdfPass').plotOn(pFrame,
                                       ROOT.RooFit.LineColor(ROOT.kRed),
                                       )
-        ndofp = resPass.floatParsFinal().getSize()
+        # -2 for the extened PDF norm for bkg and sig
+        ndofp = resPass.floatParsFinal().getSize() - 2
         chi2p = pFrame.chiSquare(ndofp)
         self._w.data('hPass').plotOn(pFrame)
 
@@ -192,7 +199,8 @@ class TagAndProbeFitter:
         self._w.pdf('pdfFail').plotOn(fFrame,
                                       ROOT.RooFit.LineColor(ROOT.kRed),
                                       )
-        ndoff = resFail.floatParsFinal().getSize()
+        # -2 for the extened PDF norm for bkg and sig
+        ndoff = resFail.floatParsFinal().getSize() - 2
         chi2f = fFrame.chiSquare(ndoff)
         self._w.data('hFail').plotOn(fFrame)
 
@@ -238,9 +246,11 @@ class TagAndProbeFitter:
         text1.SetBorderSize(0)
         text1.SetTextAlign(12)
 
-        text1.AddText("* fit status pass: {}, fail : {}".format(
+        text1.AddText("Fit status pass: {}, fail : {}".format(
             resPass.status(), resFail.status()))
-        text1.AddText("* eff = {:.4f} #pm {:.4f}".format(eff, e_eff))
+        text1.AddText("#chi^{{2}}/ndof pass: {:.3f}, fail : {:.3f}".format(
+            chi2p, chi2f))
+        text1.AddText("eff = {:.4f} #pm {:.4f}".format(eff, e_eff))
 
         text = ROOT.TPaveText(0, 0, 1, 0.8)
         text.SetFillColor(0)
@@ -259,18 +269,20 @@ class TagAndProbeFitter:
                 ax = argiter.Next()
             return arglist
 
+        text.AddText("    pass")
         listParFinalP = argsetToList(resPass.floatParsFinal())
         for p in listParFinalP:
             pName = p.GetName()
             pVar = self._w.var(pName)
-            text.AddText("   - {} \t= {:.3f} #pm {:.3f}".format(
+            text.AddText("    - {} \t= {:.3f} #pm {:.3f}".format(
                 pName, pVar.getVal(), pVar.getError()))
 
+        text.AddText("    fail")
         listParFinalF = argsetToList(resFail.floatParsFinal())
         for p in listParFinalF:
             pName = p.GetName()
             pVar = self._w.var(pName)
-            text.AddText("   - {} \t= {:.3f} #pm {:.3f}".format(
+            text.AddText("    - {} \t= {:.3f} #pm {:.3f}".format(
                 pName, pVar.getVal(), pVar.getError()))
 
         text1.Draw()
