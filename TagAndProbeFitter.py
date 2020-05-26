@@ -1,6 +1,8 @@
 from array import array
 import ROOT
+import tdrstyle
 ROOT.gROOT.SetBatch()
+tdrstyle.setTDRStyle()
 
 
 class TagAndProbeFitter:
@@ -152,38 +154,53 @@ class TagAndProbeFitter:
                                 )
 
         # plot
-        # need to run chi2 before drawing bkg component
+        # need to run chi2 after plotting full pdf
+
+        # pass
         pFrame = self._w.var(self._fitVar).frame(
             self._fitRangeMin, self._fitRangeMax)
         pFrame.SetTitle('Passing probes')
         self._w.data('hPass').plotOn(pFrame)
         self._w.pdf('pdfPass').plotOn(pFrame,
-                                      ROOT.RooFit.LineColor(ROOT.kRed),
-                                      )
-        ndofp = resPass.floatParsFinal().getSize()
-        chi2p = pFrame.chiSquare(ndofp)
-        self._w.pdf('pdfPass').plotOn(pFrame,
                                       ROOT.RooFit.Components('bkgPass'),
                                       ROOT.RooFit.LineColor(ROOT.kBlue),
                                       ROOT.RooFit.LineStyle(ROOT.kDashed),
                                       )
+        self._w.pdf('pdfPass').plotOn(pFrame,
+                                      ROOT.RooFit.LineColor(ROOT.kRed),
+                                      )
+        ndofp = resPass.floatParsFinal().getSize()
+        chi2p = pFrame.chiSquare(ndofp)
         self._w.data('hPass').plotOn(pFrame)
 
+        # residuals/pull
+        pullP = pFrame.pullHist()
+        pFrame2 = self._w.var(self._fitVar).frame(
+            self._fitRangeMin, self._fitRangeMax)
+        pFrame2.addPlotable(pullP, 'P')
+
+        # fail
         fFrame = self._w.var(self._fitVar).frame(
             self._fitRangeMin, self._fitRangeMax)
         fFrame.SetTitle('Failing probes')
         self._w.data('hFail').plotOn(fFrame)
         self._w.pdf('pdfFail').plotOn(fFrame,
-                                      ROOT.RooFit.LineColor(ROOT.kRed),
-                                      )
-        ndoff = resFail.floatParsFinal().getSize()
-        chi2f = fFrame.chiSquare(ndoff)
-        self._w.pdf('pdfFail').plotOn(fFrame,
                                       ROOT.RooFit.Components('bkgFail'),
                                       ROOT.RooFit.LineColor(ROOT.kBlue),
                                       ROOT.RooFit.LineStyle(ROOT.kDashed),
                                       )
+        self._w.pdf('pdfFail').plotOn(fFrame,
+                                      ROOT.RooFit.LineColor(ROOT.kRed),
+                                      )
+        ndoff = resFail.floatParsFinal().getSize()
+        chi2f = fFrame.chiSquare(ndoff)
         self._w.data('hFail').plotOn(fFrame)
+
+        # residuals/pull
+        pullF = fFrame.pullHist()
+        fFrame2 = self._w.var(self._fitVar).frame(
+            self._fitRangeMin, self._fitRangeMax)
+        fFrame2.addPlotable(pullF, 'P')
 
         # gof tests
         statTests = ROOT.TTree('statTests', 'statTests')
@@ -197,7 +214,7 @@ class TagAndProbeFitter:
         statTests.Fill()
 
         # make canvas
-        canvas = ROOT.TCanvas('c', 'c', 1100, 450)
+        canvas = ROOT.TCanvas('c', 'c', 1100*2, 450*2)
         canvas.Divide(3, 1)
 
         # print parameters
@@ -261,9 +278,78 @@ class TagAndProbeFitter:
 
         # print fit frames
         canvas.cd(2)
+        plotpadP = ROOT.TPad("plotpadP", "top pad", 0.0, 0.21, 1.0, 1.0)
+        ROOT.SetOwnership(plotpadP, False)
+        plotpadP.SetBottomMargin(0.00)
+        plotpadP.SetRightMargin(0.04)
+        plotpadP.SetLeftMargin(0.16)
+        plotpadP.Draw()
+        ratiopadP = ROOT.TPad("ratiopadP", "bottom pad", 0.0, 0.0, 1.0, 0.21)
+        ROOT.SetOwnership(ratiopadP, False)
+        ratiopadP.SetTopMargin(0.00)
+        ratiopadP.SetRightMargin(0.04)
+        ratiopadP.SetBottomMargin(0.5)
+        ratiopadP.SetLeftMargin(0.16)
+        ratiopadP.SetTickx(1)
+        ratiopadP.SetTicky(1)
+        ratiopadP.Draw()
+        if plotpadP != ROOT.TVirtualPad.Pad():
+            plotpadP.cd()
         pFrame.Draw()
+        ratiopadP.cd()
+        pFrame2.Draw()
+        prims = ratiopadP.GetListOfPrimitives()
+        for prim in prims:
+            if 'frame' in prim.GetName():
+                prim.GetXaxis().SetLabelSize(0.19)
+                prim.GetXaxis().SetTitleSize(0.21)
+                prim.GetXaxis().SetTitleOffset(1.0)
+                prim.GetXaxis().SetLabelOffset(0.03)
+                prim.GetYaxis().SetLabelSize(0.19)
+                prim.GetYaxis().SetLabelOffset(0.006)
+                prim.GetYaxis().SetTitleSize(0.21)
+                prim.GetYaxis().SetTitleOffset(0.35)
+                prim.GetYaxis().SetNdivisions(503)
+                prim.GetYaxis().SetTitle('Pull')
+                prim.GetYaxis().SetRangeUser(-3, 3)
+                break
+
         canvas.cd(3)
+        plotpadF = ROOT.TPad("plotpadF", "top pad", 0.0, 0.21, 1.0, 1.0)
+        ROOT.SetOwnership(plotpadF, False)
+        plotpadF.SetBottomMargin(0.00)
+        plotpadF.SetRightMargin(0.04)
+        plotpadF.SetLeftMargin(0.16)
+        plotpadF.Draw()
+        ratiopadF = ROOT.TPad("ratiopadF", "bottom pad", 0.0, 0.0, 1.0, 0.21)
+        ROOT.SetOwnership(ratiopadF, False)
+        ratiopadF.SetTopMargin(0.00)
+        ratiopadF.SetRightMargin(0.04)
+        ratiopadF.SetBottomMargin(0.5)
+        ratiopadF.SetLeftMargin(0.16)
+        ratiopadF.SetTickx(1)
+        ratiopadF.SetTicky(1)
+        ratiopadF.Draw()
+        if plotpadF != ROOT.TVirtualPad.Pad():
+            plotpadF.cd()
         fFrame.Draw()
+        ratiopadF.cd()
+        fFrame2.Draw()
+        prims = ratiopadF.GetListOfPrimitives()
+        for prim in prims:
+            if 'frame' in prim.GetName():
+                prim.GetXaxis().SetLabelSize(0.19)
+                prim.GetXaxis().SetTitleSize(0.21)
+                prim.GetXaxis().SetTitleOffset(1.0)
+                prim.GetXaxis().SetLabelOffset(0.03)
+                prim.GetYaxis().SetLabelSize(0.19)
+                prim.GetYaxis().SetLabelOffset(0.006)
+                prim.GetYaxis().SetTitleSize(0.21)
+                prim.GetYaxis().SetTitleOffset(0.35)
+                prim.GetYaxis().SetNdivisions(503)
+                prim.GetYaxis().SetTitle('Pull')
+                prim.GetYaxis().SetRangeUser(-3, 3)
+                break
 
         # save
         out = ROOT.TFile.Open(outFName, 'RECREATE')
