@@ -39,7 +39,8 @@ def build_condor_submit(test=False):
     args = ['outFName', 'inFName', 'binName', 'templateFName',
             'plotDir', 'version', 'histType', 'shiftType']
     files = ['env.sh', 'TagAndProbeFitter.py', 'run_single_fit.py',
-             'RooCMSShape.cc', 'RooCMSShape.h']
+             'RooCMSShape.cc', 'RooCMSShape.h',
+             'tdrstyle.py', 'CMS_lumi.py']
     config = '''universe    = vanilla
 executable  = condor_wrapper.sh
 arguments   = ./run_single_fit.py {}
