@@ -1,13 +1,18 @@
 # spark-tnp
 Tag and probe analysis using Apache Spark.
 
+## Before you begin
+This package uses Apache Spark clusters.
+More details on CERN's Apache Spark can be found [here](https://hadoop-user-guide.web.cern.ch/hadoop-user-guide/spark/Using_Spark_on_Hadoop.html).
+
+**Important:** If you want to use the CERN analytix cluster (which is much faster to startup than the k8s cluster),
+you need to request access to the cluster in the help document found [here](https://hadoop-user-guide.web.cern.ch/hadoop-user-guide/getstart/access.html).
+
 ## Interactive notebook
 
 There are example notebooks in the [notebooks](notebooks) directory demonstrating the use of these tools interactively.
 A good starting point is to follow the instructions in [MuonTnP.ipynb](notebooks/MuonTnP.ipynb).
-These notebooks use [swan.cern.ch](swan.cern.ch) to connect to the Apache Spark clusters at CERN.
-
-More details on CERN's Apache Spark can be found [here](https://hadoop-user-guide.web.cern.ch/hadoop-user-guide/spark/Using_Spark_on_Hadoop.html).
+These notebooks use [https://swan.cern.ch](https://swan.cern.ch) to connect to the Apache Spark clusters at CERN.
 
 ## Command line setup
 
