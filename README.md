@@ -85,7 +85,7 @@ We will use [laurelin](https://github.com/spark-root/laurelin) to
 read the root files and then write them in the parquet data format.
 There are two possible approaches: using `k8s` and using `analytix`.
 
-Conversion with `k8s` currently only works if you are using [swan.cern.ch](swan.cern.ch).
+Conversion with `k8s` currently only works if you are using [https://swan.cern.ch](https://swan.cern.ch).
 Use the [RootToParquet](notebooks/RootToParquet.ipynb) notebook as a guide.
 The output should be written to `analytix`.
 
