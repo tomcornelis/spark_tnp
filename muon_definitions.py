@@ -64,9 +64,9 @@ def get_data_mc_sub_eras(resonance, era):
             # TODO: decide how to handle alternate generators
             'Run2018_UL': ['Run2018', 'DY_madgraph'],
             # rereco
-            'Run2016': ['Run2017', 'DY_madgraph'],
+            'Run2016': ['Run2016', 'DY_madgraph'],
             'Run2017': ['Run2017', 'DY_madgraph'],
-            'Run2018': ['Run2017', 'DY_madgraph'],
+            'Run2018': ['Run2018', 'DY_madgraph'],
         }
     }
     return eraMap.get(resonance, {}).get(era, [None, None])
