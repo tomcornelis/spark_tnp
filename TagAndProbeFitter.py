@@ -40,10 +40,10 @@ class TagAndProbeFitter:
         self._fitRangeMax = fMax
 
     def set_histograms(self, hPass, hFail, peak=90):
-        self._hists['pass'] = hPass.Clone()
-        self._hists['fail'] = hFail.Clone()
-        self._hists['pass'].SetDirectory(ROOT.gROOT)
-        self._hists['fail'].SetDirectory(ROOT.gROOT)
+        self._hists['Pass'] = hPass.Clone()
+        self._hists['Fail'] = hFail.Clone()
+        self._hists['Pass'].SetDirectory(ROOT.gROOT)
+        self._hists['Fail'].SetDirectory(ROOT.gROOT)
         self._nPass = hPass.Integral()
         self._nFail = hFail.Integral()
         pb = hPass.FindBin(peak)
@@ -61,10 +61,10 @@ class TagAndProbeFitter:
         self.wsimport(dhFail)
 
     def set_gen_shapes(self, hPass, hFail, peak=90):
-        self._hists['genPass'] = hPass.Clone()
-        self._hists['genFail'] = hFail.Clone()
-        self._hists['genPass'].SetDirectory(ROOT.gROOT)
-        self._hists['genFail'].SetDirectory(ROOT.gROOT)
+        self._hists['GenPass'] = hPass.Clone()
+        self._hists['GenFail'] = hFail.Clone()
+        self._hists['GenPass'].SetDirectory(ROOT.gROOT)
+        self._hists['GenFail'].SetDirectory(ROOT.gROOT)
         self._nGenPass = hPass.Integral()
         self._nGenFail = hFail.Integral()
         pb = hPass.FindBin(peak)
@@ -234,7 +234,7 @@ class TagAndProbeFitter:
         branches['chi2F'][0] = chi2f
 
         # KS
-        binWidth = self._hists['pass'].GetBinWidth(1)
+        binWidth = self._hists['Pass'].GetBinWidth(1)
         nbins = int((self._fitRangeMax - self._fitRangeMin) / binWidth)
         hPdfPass = self._w.pdf('pdfPass').createHistogram(
             'ks_pdfPass',
@@ -409,12 +409,17 @@ class TagAndProbeFitter:
 
         # save
         out = ROOT.TFile.Open(outFName, 'RECREATE')
-        self._w.Write('{}_workspace'.format(self._name),
-                      ROOT.TObject.kOverwrite)
+        # workspace is not readable due to RooCMSShape
+        # for now, just don't write
+        # self._w.Write('{}_workspace'.format(self._name),
+        #              ROOT.TObject.kOverwrite)
         canvas.Write('{}_Canv'.format(self._name), ROOT.TObject.kOverwrite)
         resPass.Write('{}_resP'.format(self._name), ROOT.TObject.kOverwrite)
         resFail.Write('{}_resF'.format(self._name), ROOT.TObject.kOverwrite)
         statTests.Write('{}_statTests'.format(self._name),
                         ROOT.TObject.kOverwrite)
+        for hKey in self._hists:
+            self._hists[hKey].Write('{}_{}'.format(self._name, hKey),
+                                    ROOT.TObject.kOverwrite)
         out.Close()
         canvas.Print(outFName.replace('.root', '.png'))
