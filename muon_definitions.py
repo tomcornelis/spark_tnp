@@ -394,6 +394,16 @@ _binning = {
 }
 _binning['mcMass'] = _binning['mass']
 
+# friendly label for plots
+_variableLabelMap = {
+    'pt': 'p_{T} (GeV)',
+    'abseta': '|#eta|',
+    'eta': '#eta',
+    'nvtx': 'Number of primary vertices',
+    'njets': 'Number of jets (p_{T} > 30 GeV)',
+    'mass': 'm(#mu#mu) (GeV)',
+}
+
 # maps between custom variable names and names in tree
 _variableMap = {
     'nvtx': 'tag_nVertices',
@@ -545,3 +555,10 @@ def get_extended_eff_name(num, denom, variableNames):
     eff_name = get_eff_name(num, denom)
     variables_name = get_variables_name(variableNames)
     return '{}_{}'.format(eff_name, variables_name)
+
+
+def get_variable_name_pretty(v):
+    '''
+    Return the pretty version of a variable name
+    '''
+    return _variableLabelMap.get(v, v)

@@ -85,6 +85,13 @@ def add_common_fit(parser):
                         help='Filter by efficiency bin')
 
 
+def add_common_prepare(parser):
+    parser.add_argument('--numerator', nargs='*',
+                        help='Filter by numerator')
+    parser.add_argument('--denominator', nargs='*',
+                        help='Filter by denominator')
+
+
 def add_common_particle(parser):
     parser.add_argument('particle', choices=['muon', 'electron'],
                         help='Particle for scalefactors')
@@ -146,16 +153,16 @@ def parse_command_line(argv):
     add_common_multi(parser_fit)
     add_common_fit(parser_fit)
 
-    parser_plot = subparsers.add_parser(
-        'plot',
-        help='Plot fitted histograms',
+    parser_prepare = subparsers.add_parser(
+        'prepare',
+        help='Prepare efficiencies',
     )
-    add_common_particle(parser_plot)
-    add_common_resonance(parser_plot)
-    add_common_era(parser_plot)
-    add_common_options(parser_plot)
-    add_common_multi(parser_plot)
-    add_common_fit(parser_plot)
+    add_common_particle(parser_prepare)
+    add_common_resonance(parser_prepare)
+    add_common_era(parser_prepare)
+    add_common_options(parser_prepare)
+    add_common_multi(parser_prepare)
+    add_common_prepare(parser_prepare)
 
     return parser.parse_args(argv)
 
@@ -208,20 +215,16 @@ def main(argv=None):
         )
         unit = 'fit'
         desc = 'Fitting'
-    elif args.command == 'plot':
-        from plotter import plot, build_plot_jobs
-        job_fn = plot
-        jobs = build_plot_jobs(
+    elif args.command == 'prepare':
+        from prepare import prepare, build_prepare_jobs
+        job_fn = prepare
+        jobs = build_prepare_jobs(
             baseDir,
             numerator=args.numerator,
             denominator=args.denominator,
-            fitType=args.fitType,
-            sampleType=args.sampleType,
-            shiftType=args.shiftType,
-            efficiencyBin=args.efficiencyBin,
         )
-        unit = 'plot'
-        desc = 'Plotting'
+        unit = 'efficiency'
+        desc = 'Preparing'
 
     if args.dryrun:
         print('Will run {} {} jobs'.format(len(jobs), args.command))
