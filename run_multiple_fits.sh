@@ -12,7 +12,7 @@ if [ "$linesPerJob" -eq "0" ]; then
     done < $inputJobList
 else
     # read only the specified number
-    start=$((jobNumber * linesPerJob))
+    start=$((jobNumber * linesPerJob + 1))
     while read -r line; do
         jobString="./run_single_fit.py $(echo $line | tr ',' ' ')"
         echo "$jobString"
