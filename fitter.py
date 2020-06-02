@@ -160,7 +160,10 @@ def build_fit_jobs(particle, resonance, era, **kwargs):
                                            particle, resonance, era,
                                            'fits_mc',
                                            outType, effName)
-                    if doMC:
+                    # there is no need to fit MC for templates
+                    # PDF based fits are:
+                    #   NominalOld, AltSigOld
+                    if doMC and fitType in ['NominalOld', 'AltSigOld']:
                         _jobs += [(outFName, inFName, binName, templateFName,
                                    plotDir, fitType, 'mc', shiftType)]
                     return _jobs
