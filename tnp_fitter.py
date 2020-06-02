@@ -59,6 +59,8 @@ def add_common_multi(parser):
                         help='Don\'t run, just print number of jobs')
     parser.add_argument('--condor', action='store_true',
                         help='Prepare condor submit script')
+    parser.add_argument('--jobsPerSubmit', '-nj', type=int, default=1,
+                        help='Number of jobs to run per submit')
 
 
 def add_common_flatten(parser):
@@ -231,7 +233,9 @@ def main(argv=None):
     elif args.condor:
         test = False
         submit_dir = ''
-        config = build_condor_submit(test=test)
+        config = build_condor_submit(test=test,
+                                     jobsPerSubmit=args.jobsPerSubmit,
+                                     njobs=len(jobs))
         if test:
             os.makedirs('condor', exist_ok=True)
         configpath = os.path.join(

@@ -2,6 +2,7 @@ from __future__ import print_function
 import os
 import subprocess
 import itertools
+import math
 
 from muon_definitions import (get_default_num_denom,
                               get_data_mc_sub_eras,
@@ -33,30 +34,56 @@ def run_single_fit(outFName, inFName, binName, templateFName, plotDir,
         print('Error processing', binName, fitType, histType)
 
 
-def build_condor_submit(test=False):
+def build_condor_submit(test=False, jobsPerSubmit=1, njobs=1):
 
     # for now, hard coded for lxplus
     args = ['outFName', 'inFName', 'binName', 'templateFName',
             'plotDir', 'version', 'histType', 'shiftType']
-    files = ['env.sh', 'TagAndProbeFitter.py', 'run_single_fit.py',
+    files = ['env.sh', 'TagAndProbeFitter.py',
+             'run_single_fit.py',
              'RooCMSShape.cc', 'RooCMSShape.h',
              'tdrstyle.py', 'CMS_lumi.py']
+
+    joblist = 'test_joblist.txt' if test else 'joblist.txt'
+    if jobsPerSubmit > 1:
+        arguments = './run_multiple_fits.sh {} {} {}'.format(
+            joblist,
+            '$(ProcId)',
+            jobsPerSubmit,
+        )
+        queue = 'queue {}'.format(math.ceil(njobs/jobsPerSubmit))
+        files += [joblist, 'run_multiple_fits.sh']
+        flavour = 'longlunch'
+    else:
+        arguments = '/run_single_fit.py {}'.format(
+            ' '.join([f'$({a})' for a in args]),
+        )
+        queue = 'queue {} from {}'.format(
+            ','.join(args),
+            joblist,
+        )
+        flavour = 'espresso'
+
+    output = 'condor/job.$(ClusterId).$(ProcId).out' if test else '/dev/null'
+    error = 'condor/job.$(ClusterId).$(ProcId).err' if test else '/dev/null'
+    log = 'condor/job.$(ClusterId).$(ProcId).log' if test else '/dev/null'
+
     config = '''universe    = vanilla
 executable  = condor_wrapper.sh
-arguments   = ./run_single_fit.py {}
-transfer_input_files = {}
-output      = {}
-error       = {}
-log         = {}
-+JobFlavour = "espresso"
-queue {} from {}'''.format(
-        ' '.join([f'$({a})' for a in args]),
-        ','.join(files),
-        'condor/job.$(ClusterId).$(ProcId).out' if test else '/dev/null',
-        'condor/job.$(ClusterId).$(ProcId).err' if test else '/dev/null',
-        'condor/job.$(ClusterId).$(ProcId).log' if test else '/dev/null',
-        ','.join(args),
-        'test_joblist.txt' if test else 'joblist.txt',
+arguments   = {arguments}
+transfer_input_files = {files}
+output      = {output}
+error       = {error}
+log         = {log}
++JobFlavour = "{flavour}"
+{queue}'''.format(
+        arguments=arguments,
+        files=','.join(files),
+        output=output,
+        error=error,
+        log=log,
+        flavour=flavour,
+        queue=queue,
     )
 
     return config
