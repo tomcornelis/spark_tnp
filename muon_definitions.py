@@ -325,6 +325,7 @@ _denomLabels = ['genTracks', 'TrackerMuons']
 _definitionMap = {
     'genTracks': lambda df: F.lit(True),
     'TrackerMuons': lambda df: df.TM == 1,
+    'GlobalMuons': lambda df: df.Glb == 1,
     'LooseID': lambda df: df.CutBasedIdLoose == 1,
     'MediumID': lambda df: df.CutBasedIdMedium == 1,
     'MediumPromptID': lambda df: df.CutBasedIdMediumPrompt == 1,
@@ -352,7 +353,7 @@ _selectionMap = {
 # and the second entry (denoms) will be performed
 _defs = [
     [
-        ['TrackerMuons'],
+        ['TrackerMuons', 'GlobalMuons'],
         ['genTracks'],
     ],
     [
