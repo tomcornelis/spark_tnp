@@ -390,7 +390,7 @@ _binning = {
                      0.2, 0.3, 0.9, 1.2, 1.6, 2.1, 2.4]),
     'nvtx': np.array(range(10, 85, 5)),
     'njets': np.array([-0.5, 0.5, 1.5, 2.5, 3.5, 4.5]),
-    'mass': np.array(range(60*4, 130*4+1, 1)) * 0.25,
+    'mass': np.array(range(60*4, 140*4+1, 1)) * 0.25,
 }
 _binning['mcMass'] = _binning['mass']
 
