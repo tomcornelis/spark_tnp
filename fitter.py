@@ -34,7 +34,7 @@ def run_single_fit(outFName, inFName, binName, templateFName, plotDir,
         print('Error processing', binName, fitType, histType)
 
 
-def build_condor_submit(test=False, jobsPerSubmit=1, njobs=1):
+def build_condor_submit(joblist, test=False, jobsPerSubmit=1, njobs=1):
 
     # for now, hard coded for lxplus
     args = ['outFName', 'inFName', 'binName', 'templateFName',
@@ -44,7 +44,6 @@ def build_condor_submit(test=False, jobsPerSubmit=1, njobs=1):
              'RooCMSShape.cc', 'RooCMSShape.h',
              'tdrstyle.py', 'CMS_lumi.py']
 
-    joblist = 'test_joblist.txt' if test else 'joblist.txt'
     if jobsPerSubmit > 1:
         arguments = './run_multiple_fits.sh {} {} {}'.format(
             joblist,

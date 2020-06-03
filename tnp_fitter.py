@@ -233,17 +233,32 @@ def main(argv=None):
     elif args.condor:
         test = False
         submit_dir = ''
-        config = build_condor_submit(test=test,
+        joblist = os.path.join(
+            submit_dir,
+            '{}joblist_{}_{}_{}.txt'.format(
+                'test_' if test else '',
+                args.particle,
+                args.resonance,
+                args.era
+            )
+        )
+        config = build_condor_submit(joblist,
+                                     test=test,
                                      jobsPerSubmit=args.jobsPerSubmit,
                                      njobs=len(jobs))
         if test:
             os.makedirs('condor', exist_ok=True)
         configpath = os.path.join(
-            submit_dir, 'test_condor.sub' if test else 'condor.sub')
+            submit_dir,
+            '{}condor_{}_{}_{}.sub'.format(
+                'test_' if test else '',
+                args.particle,
+                args.resonance,
+                args.era
+            )
+        )
         with open(configpath, 'w') as f:
             f.write(config)
-        joblist = os.path.join(
-            submit_dir, 'test_joblist.txt' if test else 'joblist.txt')
         with open(joblist, 'w') as f:
             for job in jobs:
                 f.write(','.join([str(j) for j in job])+'\n')
