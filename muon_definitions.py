@@ -107,9 +107,12 @@ def _build_parquet_file_lists(standalone=False):
             combined = _e.split('_')[0]
             subEras = [k for k in fnamesMap[_r][_e].keys()
                        if k != combined and k.startswith(combined)]
-            fnamesMap[_r][_e][combined] = [
-                fnamesMap[_r][_e][_s]
-                for _s in subEras]
+            # only do the replacement if there are suberas
+            # e.g. heavy ion does not
+            if subEras:
+                fnamesMap[_r][_e][combined] = [
+                    fnamesMap[_r][_e][_s]
+                    for _s in subEras]
     return fnamesMap
 
 
