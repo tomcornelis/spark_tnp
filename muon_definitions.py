@@ -29,6 +29,8 @@ def get_allowed_eras(resonance):
             'Run2018',
         ],
         'JPsi': [
+            # heavy ion
+            'Run2016_HI_pPb_8TeV',
         ],
     }
     return eras.get(resonance, [])
@@ -51,6 +53,8 @@ def get_allowed_sub_eras(resonance, era):
                f'Run2018{b}' for b in 'ABCD']+['DY_madgraph'],
         },
         'JPsi': {
+            # heavy ion
+            'Run2016_HI_pPb_8TeV': ['Run2016'],
         },
     }
     return subEras.get(resonance, {}).get(era, [])
@@ -67,7 +71,11 @@ def get_data_mc_sub_eras(resonance, era):
             'Run2016': ['Run2016', 'DY_madgraph'],
             'Run2017': ['Run2017', 'DY_madgraph'],
             'Run2018': ['Run2018', 'DY_madgraph'],
-        }
+        },
+        'JPsi': {
+            # heavy ion
+            'Run2016_HI_pPb_8TeV': ['Run2016', None],
+        },
     }
     return eraMap.get(resonance, {}).get(era, [None, None])
 
@@ -121,15 +129,6 @@ def _build_root_file_lists():
             os.path.join(baseDir, era, 'tnpZ*.root'))
             if 'hadd' not in f]
 
-    # for these, I have split the merged root files into
-    # smaller chuncks for processing
-    # the exception is DY for ReReco 2016, which was already split
-    # NOTE: No promise that these will be kept on disk
-    def _split_path(resonance, era, subEra):
-        baseDir = os.path.join('/eos/cms/store/group/phys_muon',
-                               'dntaylor/TagAndProbe_split')
-        return glob.glob(os.path.join(baseDir, resonance, era,
-                                      subEra, '*.root'))
     fnamesMap = {
         'Z': {
             'Run2017_UL': {
@@ -152,22 +151,6 @@ def _build_root_file_lists():
         'JPsi': {
         },
     }
-
-    for resonance in ['Z']:
-        for era in ['Run2016', 'Run2017', 'Run2018']:
-            fnamesMap[resonance][era] = {}
-            for subEra in get_allowed_sub_eras(resonance, era):
-                if era == subEra:
-                    continue
-                fnamesMap[resonance][era][subEra] = _split_path(
-                    resonance, era, subEra)
-    # override Run2016 DY_madgraph
-    fnamesMap['Z']['Run2016']['DY_madgraph'] = glob.glob(
-        os.path.join(
-            '/eos/cms/store/group/phys_muon/hbrun',
-            'muonPOGtnpTrees/MCDR80X/DY_Summer16PremixMoriond/*.root'
-        )
-    )
 
     return fnamesMap
 
