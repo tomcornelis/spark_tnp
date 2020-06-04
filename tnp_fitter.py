@@ -85,6 +85,8 @@ def add_common_fit(parser):
                         help='Filter by sample type (data, mc)')
     parser.add_argument('--efficiencyBin', nargs='*',
                         help='Filter by efficiency bin')
+    parser.add_argument('--recover', action='store_true',
+                        help='Auto recover failed fits')
 
 
 def add_common_prepare(parser):
@@ -100,7 +102,7 @@ def add_common_particle(parser):
 
 
 def add_common_resonance(parser):
-    allowed = get_allowed_resonances()
+    allowed = sorted(get_allowed_resonances())
     parser.add_argument('resonance', choices=allowed,
                         help='Resonance for scalefactors')
 
@@ -110,7 +112,7 @@ def add_common_era(parser):
     allowed = []
     for r in a:
         allowed += get_allowed_eras(r)
-    allowed = set(allowed)
+    allowed = sorted(set(allowed))
     parser.add_argument('era', choices=allowed,
                         help='Scale factor set to produce')
 
@@ -214,6 +216,7 @@ def main(argv=None):
             sampleType=args.sampleType,
             shiftType=args.shiftType,
             efficiencyBin=args.efficiencyBin,
+            recover=args.recover,
         )
         unit = 'fit'
         desc = 'Fitting'

@@ -88,6 +88,13 @@ log         = {log}
     return config
 
 
+def recover_simple(outFName):
+    '''
+    Recover if file doesn't exist
+    '''
+    return not os.path.exists(outFName)
+
+
 def build_fit_jobs(particle, resonance, era, **kwargs):
     _baseDir = kwargs.pop('baseDir', '')
     _numerator = kwargs.pop('numerator', [])
@@ -96,10 +103,17 @@ def build_fit_jobs(particle, resonance, era, **kwargs):
     _shiftType = kwargs.pop('shiftType', [])
     _sampleType = kwargs.pop('sampleType', [])
     _efficiencyBin = kwargs.pop('efficiencyBin', [])
+    _recover = kwargs.pop('recover', False)
+    _recoverMode = kwargs.pop('recoverMode', 'simple')
     doData = (not _sampleType) or ('data' in _sampleType)
     doMC = (not _sampleType) or ('mc' in _sampleType)
 
     dataSubEra, mcSubEra = get_data_mc_sub_eras(resonance, era)
+
+    def process(outFName):
+        if _recover and _recoverMode == 'simple':
+            return recover_simple(outFName)
+        return True
 
     jobs = []
     # iterate through the efficiencies
@@ -144,7 +158,7 @@ def build_fit_jobs(particle, resonance, era, **kwargs):
                                            particle, resonance, era,
                                            'fits_data',
                                            outType, effName)
-                    if doData:
+                    if doData and process(outFName):
                         _jobs += [(outFName, inFName, binName, templateFName,
                                    plotDir, fitType, 'data', shiftType)]
                     outFName = os.path.join(_baseDir, 'fits_mc',
@@ -162,7 +176,8 @@ def build_fit_jobs(particle, resonance, era, **kwargs):
                     # there is no need to fit MC for templates
                     # PDF based fits are:
                     #   NominalOld, AltSigOld
-                    if doMC and fitType in ['NominalOld', 'AltSigOld']:
+                    if doMC and process(outFName) and\
+                            fitType in ['NominalOld', 'AltSigOld']:
                         _jobs += [(outFName, inFName, binName, templateFName,
                                    plotDir, fitType, 'mc', shiftType)]
                     return _jobs
