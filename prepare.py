@@ -3,6 +3,7 @@ import os
 import math
 import itertools
 from array import array
+import ctypes
 import ROOT
 import tdrstyle
 import CMS_lumi
@@ -35,15 +36,16 @@ def getEff(binName, fname):
         hF = tfile.Get('{}_GenFail'.format(binName))
         bin1 = 1
         bin2 = hP.GetXaxis().GetNbins()
-        eP = ROOT.Double(-1.0)
-        eF = ROOT.Double(-1.0)
+        eP = ctypes.c_double(-1.0)
+        eF = ctypes.c_double(-1.0)
         nP = hP.IntegralAndError(bin1, bin2, eP)
         nF = hF.IntegralAndError(bin1, bin2, eF)
-        eff, err = computeEff(nP, nF, eP, eF)
+        eff, err = computeEff(nP, nF, eP.value, eF.value)
         tfile.Close()
         return eff, err
-    except Exception:
+    except Exception as e:
         print('Exception for', binName)
+        raise e
         return 1., 0.
 
 
@@ -61,8 +63,8 @@ def getDataEff(binName, fname):
         eP = fitP.getError()
         eF = fitF.getError()
 
-        hP = tfile.data('{}_Pass'.format(binName))
-        hF = tfile.data('{}_Fail'.format(binName))
+        hP = tfile.Get('{}_Pass'.format(binName))
+        hF = tfile.Get('{}_Fail'.format(binName))
 
         if eP > math.sqrt(hP.Integral()):
             eP = math.sqrt(hP.Integral())
@@ -71,8 +73,9 @@ def getDataEff(binName, fname):
         tfile.Close()
 
         return computeEff(nP, nF, eP, eF)
-    except Exception:
+    except Exception as e:
         print('Exception for', binName)
+        raise e
         return 1., 0.
 
 
@@ -135,7 +138,8 @@ def prepare(baseDir, particle, resonance, era, num, denom, variableLabels):
 
     # iterate through the bin indices
     # this does nested for loops of the N-D binning (e.g. pt, eta)
-    indices = [list(range(len(binning[variableLabel])-1))
+    # binning starts at 1 (0 is underflow), same as ROOT
+    indices = [list(range(1, len(binning[variableLabel])))
                for variableLabel in variableLabels]
     output = {effName: {varName: {}}}
     for index in itertools.product(*indices):
@@ -143,8 +147,8 @@ def prepare(baseDir, particle, resonance, era, num, denom, variableLabels):
         subVarKeys = [
             '{}:[{},{}]'.format(
                 variableLabels[i],
-                binning[variableLabels[i]][ind],
-                binning[variableLabels[i]][ind+1]
+                binning[variableLabels[i]][ind-1],
+                binning[variableLabels[i]][ind]
             ) for i, ind in enumerate(index)
         ]
         _out = output[effName][varName]
@@ -172,8 +176,9 @@ def prepare(baseDir, particle, resonance, era, num, denom, variableLabels):
         _out['syst'] = sf_syst
 
         def set_bin(hist, index, val, err):
-            val_args = [i+1 for i in index] + [val]
-            err_args = [i+1 for i in index] + [err]
+            index = list(index)
+            val_args = index + [val]
+            err_args = index + [err]
             hist.SetBinContent(*val_args)
             hist.SetBinError(*err_args)
 
@@ -202,21 +207,22 @@ def prepare(baseDir, particle, resonance, era, num, denom, variableLabels):
     # gets a graph projection of an ND histogram for a given axis
     # with axis index (ie x,y,z = 0,1,2) and other dimensions ind
     def get_graph(hist, axis, axis_ind, *ind):
+        ind = list(ind)
         ni = axis.GetNbins()
         xvals = [axis.GetBinCenter(i+1) for i in range(ni)]
         xvals_errLow = [xvals[i]-axis.GetBinLowEdge(i+1) for i in range(ni)]
         xvals_errHigh = [axis.GetBinUpEdge(i+1)-xvals[i] for i in range(ni)]
         yvals = [
             hist.GetBinContent(
-                *[ii+1 for ii in ind[:axis_ind]]
+                *ind[:axis_ind]
                 + [i+1]
-                + [ii+1 for ii in ind[axis_ind:]]
+                + ind[axis_ind:]
             ) for i in range(ni)]
         yvals_err = [
             hist.GetBinError(
-                *[ii+1 for ii in ind[:axis_ind]]
+                *ind[:axis_ind]
                 + [i+1]
-                + [ii+1 for ii in ind[axis_ind:]]
+                + ind[axis_ind:]
             ) for i in range(ni)]
         graph = ROOT.TGraphAsymmErrors(
             ni,
@@ -241,7 +247,7 @@ def prepare(baseDir, particle, resonance, era, num, denom, variableLabels):
                                if ovl != variableLabel]
         otherVariableIndices = [ovi for ovi, ovl in enumerate(variableLabels)
                                 if ovl != variableLabel]
-        indices = [list(range(len(binning[vl])-1))
+        indices = [list(range(1, len(binning[vl])))
                    for vl in otherVariableLabels]
         if indices:
             for index in itertools.product(*indices):
@@ -257,7 +263,8 @@ def prepare(baseDir, particle, resonance, era, num, denom, variableLabels):
                 mg.Add(graph_data)
                 mg.Add(graph_mc)
 
-                cName = 'c' + effName + '_'.join([str(i) for i in index])
+                cName = 'c' + effName + '_'.join([str(i) for i in index])\
+                    + variableLabel
                 canvas = ROOT.TCanvas(cName, cName, 800, 800)
                 mg.Draw('AP0')
                 mg.GetXaxis().SetTitle(get_variable_name_pretty(variableLabel))
@@ -285,8 +292,8 @@ def prepare(baseDir, particle, resonance, era, num, denom, variableLabels):
                 text.SetTextSize(0.03)
                 for novi, (ovi, ovl) in enumerate(zip(otherVariableIndices,
                                                       otherVariableLabels)):
-                    xlow = axes[ovi].GetBinLowEdge(index[novi]+1)
-                    xhigh = axes[ovi].GetBinUpEdge(index[novi]+1)
+                    xlow = axes[ovi].GetBinLowEdge(index[novi])
+                    xhigh = axes[ovi].GetBinUpEdge(index[novi])
                     rtext = '{} < {} < {}'.format(
                         xlow, get_variable_name_pretty(ovl), xhigh)
                     text.AddText(rtext)
@@ -296,7 +303,9 @@ def prepare(baseDir, particle, resonance, era, num, denom, variableLabels):
                 CMS_lumi.extraText = 'Preliminary'
                 CMS_lumi.lumi_13TeV = "%0.1f fb^{-1}" % (41.5)
                 CMS_lumi.CMS_lumi(canvas, 4, 11)
-                plotDir = os.path.join(baseDir, 'plots', 'efficiency', effName)
+                plotDir = os.path.join(baseDir, 'plots',
+                                       particle, resonance, era,
+                                       effName, 'efficiency')
                 os.makedirs(plotDir, exist_ok=True)
                 otherVariableLabel = get_bin_name(otherVariableLabels, index)
                 plotName = '{}_{}_vs_{}'.format(effName,
@@ -339,7 +348,9 @@ def prepare(baseDir, particle, resonance, era, num, denom, variableLabels):
             CMS_lumi.extraText = 'Preliminary'
             CMS_lumi.lumi_13TeV = "%0.1f fb^{-1}" % (41.5)
             CMS_lumi.CMS_lumi(canvas, 4, 11)
-            plotDir = os.path.join(baseDir, 'plots', 'efficiency', effName)
+            plotDir = os.path.join(baseDir, 'plots',
+                                   particle, resonance, era,
+                                   effName, 'efficiency')
             os.makedirs(plotDir, exist_ok=True)
             plotName = '{}_vs_{}'.format(effName, variableLabel)
             plotPath = os.path.join(plotDir, plotName)
@@ -364,7 +375,7 @@ def build_prepare_jobs(particle, resonance, era, **kwargs):
         # iterate through the output binning structure
         for variableLabels in get_default_binning_variables():
 
-            jobs += [_baseDir, particle, resonance, era,
-                     num, denom, variableLabels]
+            jobs += [[_baseDir, particle, resonance, era,
+                     num, denom, variableLabels]]
 
     return jobs

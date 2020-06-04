@@ -221,9 +221,12 @@ def main(argv=None):
         from prepare import prepare, build_prepare_jobs
         job_fn = prepare
         jobs = build_prepare_jobs(
-            baseDir,
+            args.particle,
+            args.resonance,
+            args.era,
             numerator=args.numerator,
             denominator=args.denominator,
+            baseDir=baseDir,
         )
         unit = 'efficiency'
         desc = 'Preparing'
