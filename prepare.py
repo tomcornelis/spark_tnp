@@ -8,14 +8,10 @@ import ROOT
 import tdrstyle
 import CMS_lumi
 
-from muon_definitions import (get_default_num_denom,
-                              get_data_mc_sub_eras,
-                              get_default_binning,
-                              get_default_binning_variables,
+from muon_definitions import (get_data_mc_sub_eras,
                               get_full_name, get_eff_name,
                               get_bin_name,
-                              get_variables_name,
-                              get_variable_name_pretty)
+                              get_variables_name)
 
 ROOT.gROOT.SetBatch()
 ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 1001;")
@@ -89,12 +85,17 @@ def getSF(binName, fname):
     return sf, sf_err, dataEff, dataErr, mcEff, mcErr
 
 
-def prepare(baseDir, particle, resonance, era, num, denom, variableLabels):
+def prepare(baseDir, particle, resonance, era,
+            config, num, denom, variableLabels):
     hists = {}
 
     effName = get_eff_name(num, denom)
-    binning = get_default_binning()
+    binning = config.binning()
     dataSubEra, mcSubEra = get_data_mc_sub_eras(resonance, era)
+
+    def get_variable_name_pretty(variableLabel):
+        variables = config.variables()
+        return variables.get(variableLabel, {}).get('pretty', variableLabel)
 
     # create output histograms
     nVars = len(variableLabels)
@@ -358,24 +359,25 @@ def prepare(baseDir, particle, resonance, era, num, denom, variableLabels):
             canvas.Print('{}.pdf'.format(plotPath))
 
 
-def build_prepare_jobs(particle, resonance, era, **kwargs):
+def build_prepare_jobs(particle, resonance, era,
+                       config, **kwargs):
     _baseDir = kwargs.pop('baseDir', '')
     _numerator = kwargs.pop('numerator', [])
     _denominator = kwargs.pop('denominator', [])
 
     jobs = []
     # iterate through the efficiencies
-    definitions = get_default_num_denom()
-    for num, denom in definitions:
+    efficiencies = config.efficiencies()
+    for num, denom in efficiencies:
         if _numerator and num not in _numerator:
             continue
         if _denominator and denom not in _denominator:
             continue
 
         # iterate through the output binning structure
-        for variableLabels in get_default_binning_variables():
+        for variableLabels in config.binVariables():
 
             jobs += [[_baseDir, particle, resonance, era,
-                     num, denom, variableLabels]]
+                     config, num, denom, tuple(variableLabels)]]
 
     return jobs

@@ -9,75 +9,19 @@ import uproot
 from uproot_methods.classes import TH1
 
 from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
 
-from muon_definitions import (get_files, get_default_num_denom,
-                              get_default_ids, get_default_isos,
-                              get_default_denoms,
-                              get_default_fit_variable,
-                              get_default_binning,
-                              get_default_binning_variables,
-                              get_default_variable_name,
-                              get_tag_dataframe, get_weighted_dataframe,
+from muon_definitions import (get_files,
+                              get_weighted_dataframe,
                               get_binned_dataframe,
-                              get_default_selections_dataframe)
+                              get_extended_eff_name,
+                              get_full_name)
 
 useParquet = True
 
-# bin definitions
-binning = get_default_binning()
-
-# efficiency definitions
-idLabels = get_default_ids()
-isoLabels = get_default_isos()
-idLabelsTuneP = get_default_ids(tuneP=True)
-isoLabelsTuneP = get_default_isos(tuneP=True)
-denomLabels = get_default_denoms()
-
-# the binnings to produce efficiencies in
-binVariables = get_default_binning_variables()
-
-# the variable to fit
-fitVariable = get_default_fit_variable()
-fitVariableGen = get_default_fit_variable(gen=True)
-
-
-def get_eff_name(num, denom):
-    return 'NUM_{num}_DEN_{den}'.format(num=num, den=denom)
-
-
-def get_bin_name(variableNames, index):
-    return '_'.join(['{}_{}'.format(variableName, ind)
-                     for variableName, ind in zip(variableNames, index)])
-
-
-def get_variables_name(variableNames):
-    return '_'.join(variableNames)
-
-
-def get_full_name(num, denom, variableNames, index):
-    eff_name = get_eff_name(num, denom)
-    bin_name = get_bin_name(variableNames, index)
-    return '{}_{}'.format(eff_name, bin_name)
-
-
-def get_full_pass_name(num, denom, variableNames, index):
-    full_name = get_full_name(num, denom, variableNames, index)
-    return '{}_Pass'.format(full_name)
-
-
-def get_full_fail_name(num, denom, variableNames, index):
-    full_name = get_full_name(num, denom, variableNames, index)
-    return '{}_Fail'.format(full_name)
-
-
-def get_extended_eff_name(num, denom, variableNames):
-    eff_name = get_eff_name(num, denom)
-    variables_name = get_variables_name(variableNames)
-    return '{}_{}'.format(eff_name, variables_name)
-
 
 def run_conversion(spark, particle, resonance, era, subEra,
-                   shift='Nominal', **kwargs):
+                   config, shift='Nominal', **kwargs):
     _numerator = kwargs.pop('numerator', [])
     _denominator = kwargs.pop('denominator', [])
     _baseDir = kwargs.pop('baseDir', '')
@@ -104,7 +48,7 @@ def run_conversion(spark, particle, resonance, era, subEra,
     doGen = subEra in ['DY_madgraph', 'DY_powheg']
 
     # default numerator/denominator defintions
-    definitions = get_default_num_denom()
+    efficiencies = config.efficiencies()
 
     # get the dataframe
     if useParquet:
@@ -119,65 +63,54 @@ def run_conversion(spark, particle, resonance, era, subEra,
                       .load(fnames)
 
     # select tags
-    tagsDF = get_tag_dataframe(baseDF, resonance, era, subEra, shift=shift)
+    tagsDF = baseDF.filter(config.selection())
 
     # build the weights (pileup for MC)
     weightedDF = get_weighted_dataframe(
         tagsDF, doGen, resonance, era, subEra, shift=shift)
 
     # create the binning structure
+    fitVariable = config.fitVariable()
     binningSet = set([fitVariable])
     if doGen:
+        fitVariableGen = config.fitVariableGen()
         binningSet = binningSet.union(set([fitVariableGen]))
+    binVariables = config.binVariables()
     for bvs in binVariables:
         binningSet = binningSet.union(set(bvs))
 
+    binning = config.binning()
+    variables = config.variables()
     binnedDF = weightedDF
     for bName in binningSet:
         binnedDF = get_binned_dataframe(
-            binnedDF, bName+"Bin", get_default_variable_name(bName),
-            binning[bName])
-        binnedDF = get_binned_dataframe(
-            binnedDF, bName+"BinTuneP",
-            get_default_variable_name(bName, tuneP=True),
+            binnedDF, bName+"Bin",
+            variables[bName]['variable'],
             binning[bName])
 
-    # create the id columns
-    binnedDF = get_default_selections_dataframe(binnedDF)
+    # create the definitions columns
+    definitions = config.definitions()
+    for d in definitions:
+        binnedDF = binnedDF.withColumn(d, F.expr(definitions[d]))
 
     # build the unrealized yield dataframes
     # they are binned in the ID, bin variables, and fit variable
     yields = {}
     yields_gen = {}
 
-    for numLabel, denLabel in definitions:
+    for numLabel, denLabel in efficiencies:
         den = binnedDF.filter(denLabel)
-        den_pt20 = den.filter('pt>20')
-        den_pt20TuneP = den.filter('pair_newTuneP_probe_pt>20')
         for binVars in binVariables:
-            thisden = den if 'pt' in binVars else den_pt20
-            thisdenTuneP = den if 'pt' in binVars else den_pt20TuneP
-            key = (numLabel, denLabel, binVars)
-            if numLabel in idLabelsTuneP+isoLabelsTuneP:
-                yields[key] = thisdenTuneP.groupBy(
-                    numLabel, *[b+'BinTuneP' for b in
-                                list(binVars)+['mass']])\
-                    .agg({'weight2': 'sum', 'weight': 'sum'})
-                if doGen:
-                    yields_gen[key] = thisdenTuneP.groupBy(
-                        numLabel, *[b+'BinTuneP' for b in
-                                    list(binVars)+['mcMass']])\
-                        .agg({'weight2': 'sum', 'weight': 'sum'})
-            else:
-                yields[key] = thisden.groupBy(
+            key = (numLabel, denLabel, tuple(binVars))
+            yields[key] = den.groupBy(
+                numLabel, *[b+'Bin' for b in
+                            binVars+[fitVariable]])\
+                .agg({'weight2': 'sum', 'weight': 'sum'})
+            if doGen:
+                yields_gen[key] = den.groupBy(
                     numLabel, *[b+'Bin' for b in
-                                list(binVars)+['mass']])\
+                                binVars+[fitVariableGen]])\
                     .agg({'weight2': 'sum', 'weight': 'sum'})
-                if doGen:
-                    yields_gen[key] = thisden.groupBy(
-                        numLabel, *[b+'Bin' for b in
-                                    list(binVars)+['mcMass']])\
-                        .agg({'weight2': 'sum', 'weight': 'sum'})
 
     def get_values(df, mLabel, **binValues):
         for k, v in binValues.items():
@@ -222,29 +155,25 @@ def run_conversion(spark, particle, resonance, era, subEra,
         eff_outname = f'{jobPath}/{extended_eff_name}.root'
         hists = {}
 
-        print('processing', eff_outname)
+        print('Processing', eff_outname)
         realized = yields[num_den_binVars].toPandas()
 
         for bins in itertools.product(
                 *[range(1, len(binning[b])) for b in binVars]):
             binname = get_full_name(num, den, binVars, bins)
-            if num in idLabelsTuneP+isoLabelsTuneP:
-                binargs = {b+'BinTuneP': v for b, v in zip(binVars, bins)}
-                mLabel = 'massBinTuneP'
-            else:
-                binargs = {b+'Bin': v for b, v in zip(binVars, bins)}
-                mLabel = 'massBin'
+            binargs = {b+'Bin': v for b, v in zip(binVars, bins)}
+            mLabel = fitVariable + 'Bin'
 
             passargs = {num: True}
             passargs.update(binargs)
             values, sumw2 = get_values(realized, mLabel, **passargs)
-            edges = binning['mass']
+            edges = binning[fitVariable]
             hists[binname+'_Pass'] = get_hist(values, sumw2, edges)
 
             failargs = {num: False}
             failargs.update(binargs)
             values, sumw2 = get_values(realized, mLabel, **failargs)
-            edges = binning['mass']
+            edges = binning[fitVariable]
             hists[binname+'_Fail'] = get_hist(values, sumw2, edges)
 
         if doGen:
@@ -252,23 +181,19 @@ def run_conversion(spark, particle, resonance, era, subEra,
             for bins in itertools.product(
                     *[range(1, len(binning[b])) for b in binVars]):
                 binname = get_full_name(num, den, binVars, bins)
-                if num in idLabelsTuneP+isoLabelsTuneP:
-                    binargs = {b+'BinTuneP': v for b, v in zip(binVars, bins)}
-                    mLabel = 'mcMassBinTuneP'
-                else:
-                    binargs = {b+'Bin': v for b, v in zip(binVars, bins)}
-                    mLabel = 'mcMassBin'
+                binargs = {b+'Bin': v for b, v in zip(binVars, bins)}
+                mLabel = fitVariableGen + 'Bin'
 
                 passargs = {num: True}
                 passargs.update(binargs)
                 values, sumw2 = get_values(realized, mLabel, **passargs)
-                edges = binning['mass']
+                edges = binning[fitVariableGen]
                 hists[binname+'_Pass_Gen'] = get_hist(values, sumw2, edges)
 
                 failargs = {num: False}
                 failargs.update(binargs)
                 values, sumw2 = get_values(realized, mLabel, **failargs)
-                edges = binning['mass']
+                edges = binning[fitVariableGen]
                 hists[binname+'_Fail_Gen'] = get_hist(values, sumw2, edges)
 
         with uproot.recreate(eff_outname) as f:
@@ -289,13 +214,14 @@ subEras = {
 }
 
 
-def run_all(spark, particle, resonance, era, shift='Nominal', **kwargs):
+def run_all(spark, particle, resonance, era,
+            config, shift='Nominal', **kwargs):
     for subEra in subEras.get(resonance, {}).get(era, []):
         run_conversion(spark, particle, resonance, era, subEra,
-                       shift, **kwargs)
+                       config, shift, **kwargs)
 
 
-def run_spark(particle, resonance, era, **kwargs):
+def run_spark(particle, resonance, era, config, **kwargs):
     _shiftType = kwargs.pop('shiftType', [])
 
     spark = SparkSession\
@@ -306,11 +232,12 @@ def run_spark(particle, resonance, era, **kwargs):
     sc = spark.sparkContext
     print(sc.getConf().toDebugString())
 
-    shiftTypes = ['Nominal', 'tagIsoUp', 'tagIsoDown']
+    shiftTypes = config.shifts()
     for shiftType in shiftTypes:
         if _shiftType and shiftType not in _shiftType:
             continue
-        run_all(spark, particle, resonance, era, shift=shiftType, **kwargs)
+        run_all(spark, particle, resonance, era,
+                config.shift(shiftType), shift=shiftType, **kwargs)
 
     spark.stop()
 

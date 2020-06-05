@@ -78,6 +78,10 @@ For help with the script run:
 ./tnp_fitter.py -h
 ```
 
+The most important argument to pass is the configuration file
+that controls what kind of fits are produced.
+See detailed documentation in the [configs](configs) directory.
+
 ### Conversion to parquet
 
 The conversion to parquet vastly speeds up the later steps.
@@ -127,13 +131,13 @@ the efficiency data into binned histograms.
 For example, to flatten all histograms for the Run2017 Legacy muon scalefactors from Z:
 
 ```bash
-./tnp_fitter.py flatten muon Z Run2017_UL
+./tnp_fitter.py flatten muon Z Run2017_UL configs/muon_pog_official_run2_Z_2017.json
 ```
 
 You can optionally filter the efficiencies and shifts you flatten with the `--numerator`,
 `--denominator`, and `--shiftType` arguments. Thus, to only flatten the nominal histograms do:
 ```bash
-./tnp_fitter.py flatten muon Z Run2017_UL --shiftType Nominal
+./tnp_fitter.py flatten muon Z Run2017_UL configs/muon_pog_official_run2_Z_2017.json --shiftType Nominal
 ```
 
 **Note:** running this on lxplus will give the following warnings:
@@ -159,12 +163,12 @@ Histogram fitting uses local running or condor.
 
 To run locally (with 16 threads):
 ```bash
-./tnp_fitter.py fit muon Z Run2017_UL -j 16
+./tnp_fitter.py fit muon Z Run2017_UL configs/muon_pog_official_run2_Z_2017.json -j 16
 ```
 
 To submit to condor:
 ```bash
-./tnp_fitter.py fit muon Z Run2017_UL --condor
+./tnp_fitter.py fit muon Z Run2017_UL configs/muon_pog_official_run2_Z_2017.json --condor
 condor_submit condor.sub
 ```
 
@@ -174,9 +178,22 @@ See documentation with:
 ./tnp_fitter.py fit -h
 ```
 
+There is a simple automatic recovery processing that can be run
+(in case of condor failures).
+More advanced options (such as using statistical tests to evaluate the GOF)
+are still being implemented.
+```bash
+./tnp_fitter.py fit muon Z Run2017_UL configs/muon_pog_official_run2_Z_2017.json -j 16 --recover
+```
+
 ### Extract scale factors
 
-TODO
+Plots and scalefactors can the be extracted with:
+```bash
+./tnp_fitter.py prepare muon Z Run2017_UL configs/muon_pog_official_run2_Z_2017.json --condor
+```
+
+**Note:** this is still a WIP.
 
 ## Utilities
 

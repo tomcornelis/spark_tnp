@@ -11,6 +11,7 @@ except ImportError:
     hasTQDM = False
 
 from muon_definitions import get_allowed_resonances, get_allowed_eras
+from config import Configuration
 
 
 # parallel processing
@@ -117,6 +118,11 @@ def add_common_era(parser):
                         help='Scale factor set to produce')
 
 
+def add_common_config(parser):
+    parser.add_argument('config',
+                        help='Efficiency configuration file')
+
+
 def add_common_options(parser):
     parser.add_argument('--baseDir', default='',
                         help='Working directory')
@@ -143,6 +149,7 @@ def parse_command_line(argv):
     add_common_particle(parser_flatten)
     add_common_resonance(parser_flatten)
     add_common_era(parser_flatten)
+    add_common_config(parser_flatten)
     add_common_options(parser_flatten)
     add_common_flatten(parser_flatten)
 
@@ -153,6 +160,7 @@ def parse_command_line(argv):
     add_common_particle(parser_fit)
     add_common_resonance(parser_fit)
     add_common_era(parser_fit)
+    add_common_config(parser_fit)
     add_common_options(parser_fit)
     add_common_multi(parser_fit)
     add_common_fit(parser_fit)
@@ -164,6 +172,7 @@ def parse_command_line(argv):
     add_common_particle(parser_prepare)
     add_common_resonance(parser_prepare)
     add_common_era(parser_prepare)
+    add_common_config(parser_prepare)
     add_common_options(parser_prepare)
     add_common_multi(parser_prepare)
     add_common_prepare(parser_prepare)
@@ -201,6 +210,7 @@ def main(argv=None):
     elif args.command == 'flatten':
         from flattener import run_spark
         run_spark(args.particle, args.resonance, args.era,
+                  Configuration(args.config),
                   numerator=args.numerator, denominator=args.denominator,
                   shiftType=args.shiftType, baseDir=baseDir)
         return 0
@@ -209,6 +219,7 @@ def main(argv=None):
         job_fn = run_single_fit
         jobs = build_fit_jobs(
             args.particle, args.resonance, args.era,
+            Configuration(args.config),
             baseDir=baseDir,
             numerator=args.numerator,
             denominator=args.denominator,
@@ -227,6 +238,7 @@ def main(argv=None):
             args.particle,
             args.resonance,
             args.era,
+            Configuration(args.config),
             numerator=args.numerator,
             denominator=args.denominator,
             baseDir=baseDir,

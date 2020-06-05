@@ -4,10 +4,7 @@ import subprocess
 import itertools
 import math
 
-from muon_definitions import (get_default_num_denom,
-                              get_data_mc_sub_eras,
-                              get_default_binning,
-                              get_default_binning_variables,
+from muon_definitions import (get_data_mc_sub_eras,
                               get_full_name, get_eff_name,
                               get_extended_eff_name)
 
@@ -95,7 +92,8 @@ def recover_simple(outFName):
     return not os.path.exists(outFName)
 
 
-def build_fit_jobs(particle, resonance, era, **kwargs):
+def build_fit_jobs(particle, resonance, era,
+                   config, **kwargs):
     _baseDir = kwargs.pop('baseDir', '')
     _numerator = kwargs.pop('numerator', [])
     _denominator = kwargs.pop('denominator', [])
@@ -117,16 +115,16 @@ def build_fit_jobs(particle, resonance, era, **kwargs):
 
     jobs = []
     # iterate through the efficiencies
-    definitions = get_default_num_denom()
-    binning = get_default_binning()
-    for num, denom in definitions:
+    efficiencies = config.efficiencies()
+    binning = config.binning()
+    for num, denom in efficiencies:
         if _numerator and num not in _numerator:
             continue
         if _denominator and denom not in _denominator:
             continue
 
         # iterate through the output binning structure
-        for variableLabels in get_default_binning_variables():
+        for variableLabels in config.binVariables():
             # iterate through the bin indices
             # this does nested for loops of the N-D binning (e.g. pt, eta)
             indices = [list(range(len(binning[variableLabel])-1))
@@ -182,27 +180,15 @@ def build_fit_jobs(particle, resonance, era, **kwargs):
                                    plotDir, fitType, 'mc', shiftType)]
                     return _jobs
 
-                for fitType in ['Nominal', 'AltSig', 'AltBkg',
-                                'NominalOld', 'AltSigOld']:
+                for fitShift in config.fitShifts():
                     if (_fitType or _shiftType):
-                        if not (_fitType and fitType in _fitType):
+                        if not ((_fitType and fitShift in _fitType) or
+                                (_shiftType and fitShift in _shiftType)):
                             continue
-                    shiftType = 'Nominal'
-                    inType = 'Nominal'
-                    outType = fitType
-                    jobs += get_jobs(fitType, shiftType, inType, outType)
-
-                for shiftType in ['tagIsoUp', 'tagIsoDown',
-                                  'massBinUp', 'massBinDown',
-                                  'massRangeUp', 'massRangeDown']:
-                    if (_fitType or _shiftType):
-                        if not (_shiftType and shiftType in _shiftType):
-                            continue
-                    fitType = 'Nominal'
-                    inType = 'Nominal'
-                    if 'tagIso' in shiftType:
-                        inType = shiftType
-                    outType = shiftType
-                    jobs += get_jobs(fitType, shiftType, inType, outType)
+                    params = config.fitShift(fitShift)
+                    jobs += get_jobs(params['fitType'],
+                                     params['shiftType'],
+                                     params['inType'],
+                                     fitShift)
 
     return jobs
