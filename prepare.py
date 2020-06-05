@@ -2,6 +2,7 @@ from __future__ import print_function
 import os
 import math
 import itertools
+import json
 from array import array
 import ctypes
 import ROOT
@@ -11,6 +12,7 @@ import CMS_lumi
 from muon_definitions import (get_data_mc_sub_eras,
                               get_full_name, get_eff_name,
                               get_bin_name,
+                              get_extended_eff_name,
                               get_variables_name)
 
 ROOT.gROOT.SetBatch()
@@ -90,6 +92,7 @@ def prepare(baseDir, particle, resonance, era,
     hists = {}
 
     effName = get_eff_name(num, denom)
+    extEffName = get_extended_eff_name(num, denom, variableLabels)
     binning = config.binning()
     dataSubEra, mcSubEra = get_data_mc_sub_eras(resonance, era)
 
@@ -110,7 +113,7 @@ def prepare(baseDir, particle, resonance, era,
             'More than 3 dimensions are not supported for scale factors'
         )
 
-    hargs = [effName, effName]
+    hargs = [extEffName, extEffName]
     for variableLabel in variableLabels:
         hargs += [len(binning[variableLabel]) - 1,
                   array('d', binning[variableLabel])]
@@ -123,18 +126,18 @@ def prepare(baseDir, particle, resonance, era,
     if nVars == 2:
         hist.SetOption('colz')
         hist.GetZaxis().SetTitle('Scalefactor')
-    hist_stat = hist.Clone(effName+'_stat')
-    hist_syst = hist.Clone(effName+'_syst')
-    hist_dataEff = hist.Clone(effName+'_efficiencyData')
+    hist_stat = hist.Clone(extEffName+'_stat')
+    hist_syst = hist.Clone(extEffName+'_syst')
+    hist_dataEff = hist.Clone(extEffName+'_efficiencyData')
     if nVars == 1:
         hist_dataEff.GetYaxis().SetTitle('Efficiency')
     if nVars == 2:
         hist_dataEff.GetZaxis().SetTitle('Efficiency')
-    hist_dataEff_stat = hist_dataEff.Clone(effName+'_efficiencyData_stat')
-    hist_dataEff_syst = hist_dataEff.Clone(effName+'_efficiencyData_syst')
-    hist_mcEff = hist_dataEff.Clone(effName+'_efficiencyMC')
-    hist_mcEff_stat = hist_dataEff.Clone(effName+'_efficiencyMC_stat')
-    hist_mcEff_syst = hist_dataEff.Clone(effName+'_efficiencyMC_syst')
+    hist_dataEff_stat = hist_dataEff.Clone(extEffName+'_efficiencyData_stat')
+    hist_dataEff_syst = hist_dataEff.Clone(extEffName+'_efficiencyData_syst')
+    hist_mcEff = hist_dataEff.Clone(extEffName+'_efficiencyMC')
+    hist_mcEff_stat = hist_dataEff.Clone(extEffName+'_efficiencyMC_stat')
+    hist_mcEff_syst = hist_dataEff.Clone(extEffName+'_efficiencyMC_syst')
     varName = get_variables_name(variableLabels)
 
     # iterate through the bin indices
@@ -195,15 +198,48 @@ def prepare(baseDir, particle, resonance, era,
         set_bin(hist_mcEff_stat, index, mcEff, mcStat)
         set_bin(hist_mcEff_syst, index, mcEff, mcSyst)
 
-    hists[effName] = hist
-    hists[effName+'_stat'] = hist_stat
-    hists[effName+'_syst'] = hist_syst
-    hists[effName+'_efficiencyData'] = hist_dataEff
-    hists[effName+'_efficiencyData_stat'] = hist_dataEff_stat
-    hists[effName+'_efficiencyData_syst'] = hist_dataEff_syst
-    hists[effName+'_efficiencyMC'] = hist_mcEff
-    hists[effName+'_efficiencyMC_stat'] = hist_mcEff_stat
-    hists[effName+'_efficiencyMC_syst'] = hist_mcEff_syst
+    hists[extEffName] = hist
+    hists[extEffName+'_stat'] = hist_stat
+    hists[extEffName+'_syst'] = hist_syst
+    hists[extEffName+'_efficiencyData'] = hist_dataEff
+    hists[extEffName+'_efficiencyData_stat'] = hist_dataEff_stat
+    hists[extEffName+'_efficiencyData_syst'] = hist_dataEff_syst
+    hists[extEffName+'_efficiencyMC'] = hist_mcEff
+    hists[extEffName+'_efficiencyMC_stat'] = hist_mcEff_stat
+    hists[extEffName+'_efficiencyMC_syst'] = hist_mcEff_syst
+
+    # save the efficiency
+    plotDir = os.path.join(baseDir, 'plots',
+                           particle, resonance, era,
+                           effName, 'efficiency')
+    os.makedirs(plotDir, exist_ok=True)
+
+    effDir = os.path.join(baseDir, 'efficiencies',
+                          particle, resonance, era,
+                          effName)
+    os.makedirs(effDir, exist_ok=True)
+    effPath = os.path.join(effDir, extEffName)
+
+    # JSON format
+    with open('{}.json'.format(effPath), 'w') as f:
+        f.write(json.dumps(output, indent=4, sort_keys=True))
+
+    # ROOT histogram format
+    tfile = ROOT.TFile.Open('{}.root'.format(effPath), 'recreate')
+    for h in sorted(hists):
+        hists[h].Write(h)
+
+        if nVars == 2:
+            cName = 'c' + h
+            canvas = ROOT.TCanvas(cName, cName, 1000, 800)
+            ROOT.gStyle.SetPaintTextFormat("5.3f")
+            canvas.SetRightMargin(0.24)
+            hists[h].Draw('colz text')
+            plotPath = os.path.join(plotDir, h)
+            canvas.Print('{}.png'.format(plotPath))
+            canvas.Print('{}.pdf'.format(plotPath))
+
+    tfile.Close()
 
     # gets a graph projection of an ND histogram for a given axis
     # with axis index (ie x,y,z = 0,1,2) and other dimensions ind
@@ -238,9 +274,9 @@ def prepare(baseDir, particle, resonance, era,
 
     # plot the efficiencies
     # enumerate over the axis/variable to plot
-    axes = [hists[effName].GetXaxis(),
-            hists[effName].GetYaxis(),
-            hists[effName].GetZaxis()]
+    axes = [hists[extEffName].GetXaxis(),
+            hists[extEffName].GetYaxis(),
+            hists[extEffName].GetZaxis()]
     for vi, variableLabel in enumerate(variableLabels):
 
         # iterate over the other axis indices
@@ -252,11 +288,11 @@ def prepare(baseDir, particle, resonance, era,
                    for vl in otherVariableLabels]
         if indices:
             for index in itertools.product(*indices):
-                graph_data = get_graph(hists[effName+'_efficiencyData'],
+                graph_data = get_graph(hists[extEffName+'_efficiencyData'],
                                        axes[vi], vi, *index)
                 graph_data.SetLineColor(ROOT.kBlack)
                 graph_data.SetMarkerColor(ROOT.kBlack)
-                graph_mc = get_graph(hists[effName+'_efficiencyMC'],
+                graph_mc = get_graph(hists[extEffName+'_efficiencyMC'],
                                      axes[vi], vi, *index)
                 graph_mc.SetLineColor(ROOT.kBlue)
                 graph_mc.SetMarkerColor(ROOT.kBlue)
@@ -264,7 +300,7 @@ def prepare(baseDir, particle, resonance, era,
                 mg.Add(graph_data)
                 mg.Add(graph_mc)
 
-                cName = 'c' + effName + '_'.join([str(i) for i in index])\
+                cName = 'c' + extEffName + '_'.join([str(i) for i in index])\
                     + variableLabel
                 canvas = ROOT.TCanvas(cName, cName, 800, 800)
                 mg.Draw('AP0')
@@ -318,11 +354,11 @@ def prepare(baseDir, particle, resonance, era,
 
         # if no indices, easier, just itself
         else:
-            graph_data = get_graph(hists[effName+'_efficiencyData'],
+            graph_data = get_graph(hists[extEffName+'_efficiencyData'],
                                    axes[vi], vi)
             graph_data.SetLineColor(ROOT.kBlack)
             graph_data.SetMarkerColor(ROOT.kBlack)
-            graph_mc = get_graph(hists[effName+'_efficiencyMC'],
+            graph_mc = get_graph(hists[extEffName+'_efficiencyMC'],
                                  axes[vi], vi)
             graph_mc.SetLineColor(ROOT.kBlue)
             graph_mc.SetMarkerColor(ROOT.kBlue)
@@ -330,7 +366,7 @@ def prepare(baseDir, particle, resonance, era,
             mg.Add(graph_data)
             mg.Add(graph_mc)
 
-            canvas = ROOT.TCanvas('c'+effName, 'c', 800, 800)
+            canvas = ROOT.TCanvas('c'+extEffName, 'c', 800, 800)
             mg.Draw('AP0')
             mg.GetXaxis().SetTitle(get_variable_name_pretty(variableLabel))
             mg.GetYaxis().SetTitle('Efficiency')
