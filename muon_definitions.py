@@ -52,6 +52,9 @@ def get_allowed_sub_eras(resonance, era):
                f'Run2018{b}' for b in 'ABCD']+['DY_madgraph'],
         },
         'JPsi': {
+            # ultra legacy
+            'Run2017_UL': ['Run2017'] + [
+                f'Run2017{b}' for b in 'BCDEF']+['Jpsi'],
             # heavy ion
             'Run2016_HI_pPb_8TeV': ['Run2016'],
         },
@@ -72,6 +75,8 @@ def get_data_mc_sub_eras(resonance, era):
             'Run2018': ['Run2018', 'DY_madgraph'],
         },
         'JPsi': {
+            # ultra legacy
+            'Run2017_UL': ['Run2017', 'Jpsi'],
             # heavy ion
             'Run2016_HI_pPb_8TeV': ['Run2016', None],
         },
@@ -124,6 +129,13 @@ def _build_root_file_lists():
             os.path.join(baseDir, era, 'tnpZ*.root'))
             if 'hadd' not in f]
 
+    def _UL17Jpsipath(era):
+        baseDir = os.path.join('/eos/cms/store/group/phys_muon',
+                               'TagAndProbe/ULRereco/2017/102X/Jpsi')
+        return [f for f in glob.glob(
+            os.path.join(baseDir, era, '*.root'))
+            if 'hadd' not in f]
+
     def _UL18path(era):
         baseDir = os.path.join('/eos/cms/store/group/phys_muon',
                                'TagAndProbe/ULRereco/2018/102X')
@@ -151,6 +163,14 @@ def _build_root_file_lists():
             },
         },
         'JPsi': {
+            'Run2017_UL': {
+                'Run2017B': _UL17Jpsipath('Run2017B'),
+                'Run2017C': _UL17Jpsipath('Run2017C'),
+                'Run2017D': _UL17Jpsipath('Run2017D'),
+                'Run2017E': _UL17Jpsipath('Run2017E'),
+                'Run2017F': _UL17Jpsipath('Run2017F'),
+                'Jpsi': _UL17path('MC_Jpsi_pt8GeV'),
+            },
         },
     }
 
