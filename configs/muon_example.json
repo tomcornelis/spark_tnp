@@ -1,0 +1,36 @@
+{
+    "efficiencies": [
+        ["TightID", "TrackerMuons"],
+        ["TightRelIso", "TightIDandIPCut"]
+    ],
+    "selection": "tag_pt>26 and tag_abseta<2.4 and tag_IsoMu24==1 and pair_probeMultiplicity==1 and tag_combRelIsoPF04dBeta<0.2",
+    "definitions": {
+        "TrackerMuons": "TM == 1",
+        "TightID": "CutBasedIdTight == 1",
+        "TightIDandIPCut": "CutBasedIdTight == 1"
+    },
+    "binning": {
+        "pt": [15, 20, 25, 30, 40, 50, 60, 120],
+        "abseta": [0, 0.9, 1.2, 2.1, 2.4],
+        "eta": [-2.4, -2.1, -1.6, -1.2, -0.9, -0.3, -0.2, 0.2, 0.3, 0.9, 1.2, 1.6, 2.1, 2.4],
+        "mass": "np.array(range(60*4, 140*4+1)) * 0.25",
+        "mcMass": "np.array(range(60*4, 140*4+1)) * 0.25"
+    },
+    "variables": {
+        "pt": {"variable": "pt", "pretty": "p_{T} (GeV)"},
+        "abseta": {"variable": "abseta", "pretty": "|#eta|"},
+        "eta": {"variable": "eta", "pretty": "#eta"},
+        "mass": {"variable": "mass", "pretty": "m(#mu#mu) (GeV)"},
+        "mcMass": {"variable": "mcMass", "pretty": "m(#mu#mu) (GeV)"}
+    },
+    "fitVariable": "mass",
+    "fitVariableGen": "mcMass",
+    "binVariables": [
+        ["abseta", "pt"],
+        ["eta"]
+    ],
+    "shifts": {
+    },
+    "fitShifts": {
+    }
+}
