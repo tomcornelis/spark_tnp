@@ -169,7 +169,7 @@ def _build_root_file_lists():
                 'Run2017D': _UL17Jpsipath('Run2017D'),
                 'Run2017E': _UL17Jpsipath('Run2017E'),
                 'Run2017F': _UL17Jpsipath('Run2017F'),
-                'Jpsi': _UL17path('MC_Jpsi_pt8GeV'),
+                'Jpsi': _UL17Jpsipath('MC_Jpsi_pt8GeV'),
             },
         },
     }
