@@ -62,8 +62,14 @@ def run_conversion(spark, particle, resonance, era, subEra,
                       .option('tree', treename)\
                       .load(fnames)
 
+    # create the definitions columns
+    definitions = config.definitions()
+    defDF = baseDF
+    for d in definitions:
+        defDF = defDF.withColumn(d, F.expr(definitions[d]))
+
     # select tags
-    tagsDF = baseDF.filter(config.selection())
+    tagsDF = defDF.filter(config.selection())
 
     # build the weights (pileup for MC)
     weightedDF = get_weighted_dataframe(
@@ -87,11 +93,6 @@ def run_conversion(spark, particle, resonance, era, subEra,
             binnedDF, bName+"Bin",
             variables[bName]['variable'],
             binning[bName])
-
-    # create the definitions columns
-    definitions = config.definitions()
-    for d in definitions:
-        binnedDF = binnedDF.withColumn(d, F.expr(definitions[d]))
 
     # build the unrealized yield dataframes
     # they are binned in the ID, bin variables, and fit variable
