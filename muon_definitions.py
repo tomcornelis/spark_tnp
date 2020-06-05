@@ -5,7 +5,7 @@ import itertools
 import numpy as np
 from pyspark.sql import functions as F
 from pyspark.ml.feature import Bucketizer
-
+from pyspark.sql.types import *
 
 # allowed choices
 def get_allowed_resonances():
@@ -314,13 +314,21 @@ def get_selection_dataframe(df, selection_name, selection_func):
     '''
     return df.withColumn(selection_name, selection_func(df))
 
+def get_combinedID_dataframe(df, selection_name, colName1, colName2):
+    '''
+    Produces a new dataframe with a new column `selection_name`
+    from the function `selection_func`.
+    '''
+    combinedID_udf = F.udf(lambda ID1,ID2 : (ID1==1 and ID2==1), BooleanType())
+    return df.withColumn(selection_name, combinedID_udf(df[colName1],df[colName2]))
 
 # Customization for Muon POG's officially supported IDs
-_idLabels = ['LooseID', 'MediumID', 'MediumPromptID', 'TightID', 'SoftID']
-_isoLabels = ['LooseRelIso', 'TightRelIso']
+_idLabels = ['LooseID', 'MediumID', 'MediumPromptID', 'TightID', 'SoftID','LooseIDandMiniIso','TightIDandMiniIso']
+_isoLabels = ['LooseRelIso', 'TightRelIso','MiniIsolationLoose','MiniIsolationTight']
 _idLabelsTuneP = ['HighPtID', 'TrkHighPtID']
 _isoLabelsTuneP = ['LooseRelTkIso', 'TightRelTkIso']
 _denomLabels = ['genTracks', 'TrackerMuons']
+
 
 _definitionMap = {
     'genTracks': lambda df: F.lit(True),
@@ -336,8 +344,17 @@ _definitionMap = {
     'TightRelIso': lambda df: df.combRelIsoPF04dBeta < 0.15,
     'LooseRelTkIso': lambda df: df.relTkIso < 0.10,
     'TightRelTkIso': lambda df: df.relTkIso < 0.05,
+    'MiniIsolationLoose' : lambda df : df.MiniIsolation <0.4, 
+    'MiniIsolationTight' : lambda df : df.MiniIsolation <0.1,
+    #'LooseIDandMiniIso' : combineID_udf(df.MiniIsolationLoose, df.CutBasedIdLoose), #lambda df : df.MiniIsolationLoose == 1 & df.CutBasedIdLoose == 1, 
+    #'TightIDandMiniIso' : combineID_udf(df.MiniIsolationTight, df.CutBasedIdTight), #lambda df : df.MiniIsolationTight == 1 & df.CutBasedIdTight == 1, 
+
 }
 
+_CombinedDefinitionMap = {
+    'LooseIDandMiniIso' : ['MiniIsolationLoose', 'CutBasedIdLoose'], 
+    'TightIDandMiniIso' : ['MiniIsolationTight', 'CutBasedIdTight'], 
+}
 
 # map of alternative namings used for selections (for isolation)
 _selectionMap = {
@@ -351,26 +368,38 @@ _selectionMap = {
 # a product between the first entry (nums)
 # and the second entry (denoms) will be performed
 _defs = [
+#    [
+#        ['TrackerMuons'],
+#        ['genTracks'],
+#    ],
+#    [
+#        ['LooseID', 'MediumID', 'MediumPromptID', 'TightID',
+#         'SoftID', 'HighPtID', 'TrkHighPtID','LooseIDandMiniIso','TightIDandMiniIso'],
+#        ['genTracks', 'TrackerMuons'],
+#    ],
+#    [
+#        ['LooseRelIso'],
+#        ['LooseID', 'MediumID', 'MediumPromptID', 'TightIDandIPCut'],
+#    ],
+#    [
+#        ['TightRelIso'],
+#        ['MediumID', 'MediumPromptID', 'TightIDandIPCut'],
+#    ],
+#    [
+#        ['LooseRelTkIso', 'TightRelTkIso'],
+#        ['HighPtIDandIPCut', 'TrkHighPtIDandIPCut'],
+#    ],
     [
-        ['TrackerMuons'],
-        ['genTracks'],
+         ['TightID'],
+         ['genTracks', 'TrackerMuons'],
     ],
     [
-        ['LooseID', 'MediumID', 'MediumPromptID', 'TightID',
-         'SoftID', 'HighPtID', 'TrkHighPtID'],
-        ['genTracks', 'TrackerMuons'],
+        ['TightIDandMiniIso'],
+        ['TightID'],
     ],
     [
-        ['LooseRelIso'],
-        ['LooseID', 'MediumID', 'MediumPromptID', 'TightIDandIPCut'],
-    ],
-    [
-        ['TightRelIso'],
-        ['MediumID', 'MediumPromptID', 'TightIDandIPCut'],
-    ],
-    [
-        ['LooseRelTkIso', 'TightRelTkIso'],
-        ['HighPtIDandIPCut', 'TrkHighPtIDandIPCut'],
+        ['LooseIDandMiniIso'],
+        ['LooseID'],
     ],
 ]
 
@@ -499,13 +528,25 @@ def get_default_selections_dataframe(df):
     Produces a dataframe with all of the Muon POG's
     officially supported id/isos.
     '''
+    MiniIsoAEff_udf = F.udf(lambda abseta : 0.0735 if abseta <= 0.8 else (0.0619 if abseta <= 1.3 else (0.0465 if  abseta <= 2.0 else (0.0433 if abseta <=2.2 else 0.0577) ) ) , FloatType())
+    MiniIsoRiso2_udf = F.udf(lambda pt : max(0.05, min(0.2, 10.0/pt)), FloatType())
+    MiniIsolation_udf = F.udf(lambda charged, photon, neutral, corr, pt : (charged+max(0.0,photon+neutral-corr))/pt , FloatType())
+    df = df.withColumn('MiniIsoAEff', MiniIsoAEff_udf(df.abseta) )
+    df = df.withColumn('MiniIso_riso2', MiniIsoRiso2_udf(df.pt) )
+    df = df.withColumn('MiniIso_CorrectedTerm', F.col('fixedGridRhoFastjetCentralNeutral')*F.col('MiniIsoAEff')*(F.col('MiniIso_riso2')/0.09) )
+    df = df.withColumn('MiniIsolation', MiniIsolation_udf(df.miniIsoCharged, df.miniIsoPhotons, df.miniIsoNeutrals, df.MiniIso_CorrectedTerm, df.pt) ) 
+    
     for sel_name, sel_func in _definitionMap.items():
         df = get_selection_dataframe(df, sel_name, sel_func)
-
+        
+    # and for combined ID
+    for comb_sel_name, colNames in _CombinedDefinitionMap.items():
+        df = get_combinedID_dataframe(df, comb_sel_name, colNames[0], colNames[1])
+        
     # and renamed for convenience
     for alt_sel_name, sel_name in _selectionMap.items():
         df = df.withColumn(alt_sel_name, df[sel_name])
-
+    #print(df.dtypes)
     return df
 
 

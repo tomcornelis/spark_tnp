@@ -226,7 +226,7 @@ def main(argv=None):
     if args.dryrun:
         print('Will run {} {} jobs'.format(len(jobs), args.command))
     elif args.condor:
-        test = False
+        test = True
         submit_dir = ''
         config = build_condor_submit(test=test)
         if test:
