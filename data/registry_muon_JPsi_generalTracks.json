@@ -1,0 +1,79 @@
+[
+    {
+        "particle": "muon",
+        "resonance": "JPsi",
+        "era": "Run2016_HI_pPb_8TeV",
+        "subEra": "Run2016",
+        "probe": "generalTracks",
+        "parquet": ["/cms/muon_pog/parquet/JPsi/Run2016_HI_pPb_8TeV/Run2016/tnp.parquet"],
+        "root": [],
+        "treename": "tpTree/fitter_tree",
+        "version": 1
+    },
+    {
+        "particle": "muon",
+        "resonance": "JPsi",
+        "era": "Run2017_UL",
+        "subEra": "Run2017B",
+        "probe": "generalTracks",
+        "parquet": ["/cms/muon_pog/parquet/JPsi/Run2017_UL/Run2017B/tnp.parquet"],
+        "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2017/102X/Jpsi/Run2017B/tnpJPsi*.root"],
+        "treename": "tpTree/fitter_tree",
+        "version": 1
+    },
+    {
+        "particle": "muon",
+        "resonance": "JPsi",
+        "era": "Run2017_UL",
+        "subEra": "Run2017C",
+        "probe": "generalTracks",
+        "parquet": ["/cms/muon_pog/parquet/JPsi/Run2017_UL/Run2017C/tnp.parquet"],
+        "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2017/102X/Jpsi/Run2017C/tnpJPsi*.root"],
+        "treename": "tpTree/fitter_tree",
+        "version": 1
+    },
+    {
+        "particle": "muon",
+        "resonance": "JPsi",
+        "era": "Run2017_UL",
+        "subEra": "Run2017D",
+        "probe": "generalTracks",
+        "parquet": ["/cms/muon_pog/parquet/JPsi/Run2017_UL/Run2017D/tnp.parquet"],
+        "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2017/102X/Jpsi/Run2017D/tnpJPsi*.root"],
+        "treename": "tpTree/fitter_tree",
+        "version": 1
+    },
+    {
+        "particle": "muon",
+        "resonance": "JPsi",
+        "era": "Run2017_UL",
+        "subEra": "Run2017E",
+        "probe": "generalTracks",
+        "parquet": ["/cms/muon_pog/parquet/JPsi/Run2017_UL/Run2017E/tnp.parquet"],
+        "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2017/102X/Jpsi/Run2017E/tnpJPsi*.root"],
+        "treename": "tpTree/fitter_tree",
+        "version": 1
+    },
+    {
+        "particle": "muon",
+        "resonance": "JPsi",
+        "era": "Run2017_UL",
+        "subEra": "Run2017F",
+        "probe": "generalTracks",
+        "parquet": ["/cms/muon_pog/parquet/JPsi/Run2017_UL/Run2017F/tnp.parquet"],
+        "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2017/102X/Jpsi/Run2017F/tnpJPsi*.root"],
+        "treename": "tpTree/fitter_tree",
+        "version": 1
+    },
+    {
+        "particle": "muon",
+        "resonance": "JPsi",
+        "era": "Run2017_UL",
+        "subEra": "Jpsi",
+        "probe": "generalTracks",
+        "parquet": ["/cms/muon_pog/parquet/JPsi/Run2017_UL/Jpsi/tnp.parquet"],
+        "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2017/102X/Jpsi/MC_Jpsi_pt8GeV/tnpJPsi*.root"],
+        "treename": "tpTree/fitter_tree",
+        "version": 1
+    }
+]

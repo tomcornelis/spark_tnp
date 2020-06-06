@@ -87,7 +87,7 @@ def getSF(binName, fname):
     return sf, sf_err, dataEff, dataErr, mcEff, mcErr
 
 
-def prepare(baseDir, particle, resonance, era,
+def prepare(baseDir, particle, probe, resonance, era,
             config, num, denom, variableLabels):
     hists = {}
 
@@ -164,7 +164,8 @@ def prepare(baseDir, particle, resonance, era,
         # the fitted distributions
         fitType = 'Nominal'
         dataFNameFit = os.path.join(baseDir, 'fits_data',
-                                    particle, resonance, era,
+                                    particle, probe,
+                                    resonance, era,
                                     fitType, effName,
                                     binName + '.root')
         sf, sf_stat, dataEff, dataStat, mcEff, mcStat = getSF(
@@ -210,12 +211,14 @@ def prepare(baseDir, particle, resonance, era,
 
     # save the efficiency
     plotDir = os.path.join(baseDir, 'plots',
-                           particle, resonance, era,
+                           particle, probe,
+                           resonance, era,
                            effName, 'efficiency')
     os.makedirs(plotDir, exist_ok=True)
 
     effDir = os.path.join(baseDir, 'efficiencies',
-                          particle, resonance, era,
+                          particle, probe,
+                          resonance, era,
                           effName)
     os.makedirs(effDir, exist_ok=True)
     effPath = os.path.join(effDir, extEffName)
@@ -341,7 +344,8 @@ def prepare(baseDir, particle, resonance, era,
                 CMS_lumi.lumi_13TeV = "%0.1f fb^{-1}" % (41.5)
                 CMS_lumi.CMS_lumi(canvas, 4, 11)
                 plotDir = os.path.join(baseDir, 'plots',
-                                       particle, resonance, era,
+                                       particle, probe,
+                                       resonance, era,
                                        effName, 'efficiency')
                 os.makedirs(plotDir, exist_ok=True)
                 otherVariableLabel = get_bin_name(otherVariableLabels, index)
@@ -386,7 +390,8 @@ def prepare(baseDir, particle, resonance, era,
             CMS_lumi.lumi_13TeV = "%0.1f fb^{-1}" % (41.5)
             CMS_lumi.CMS_lumi(canvas, 4, 11)
             plotDir = os.path.join(baseDir, 'plots',
-                                   particle, resonance, era,
+                                   particle, probe,
+                                   resonance, era,
                                    effName, 'efficiency')
             os.makedirs(plotDir, exist_ok=True)
             plotName = '{}_vs_{}'.format(effName, variableLabel)
@@ -395,7 +400,7 @@ def prepare(baseDir, particle, resonance, era,
             canvas.Print('{}.pdf'.format(plotPath))
 
 
-def build_prepare_jobs(particle, resonance, era,
+def build_prepare_jobs(particle, probe, resonance, era,
                        config, **kwargs):
     _baseDir = kwargs.pop('baseDir', '')
     _numerator = kwargs.pop('numerator', [])
@@ -413,7 +418,7 @@ def build_prepare_jobs(particle, resonance, era,
         # iterate through the output binning structure
         for variableLabels in config.binVariables():
 
-            jobs += [[_baseDir, particle, resonance, era,
+            jobs += [[_baseDir, particle, probe, resonance, era,
                      config, num, denom, tuple(variableLabels)]]
 
     return jobs

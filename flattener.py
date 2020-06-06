@@ -11,8 +11,8 @@ from uproot_methods.classes import TH1
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 
-from muon_definitions import (get_files,
-                              get_weighted_dataframe,
+from registry import registry
+from muon_definitions import (get_weighted_dataframe,
                               get_binned_dataframe,
                               get_extended_eff_name,
                               get_full_name)
@@ -20,7 +20,7 @@ from muon_definitions import (get_files,
 useParquet = True
 
 
-def run_conversion(spark, particle, resonance, era, subEra,
+def run_conversion(spark, particle, probe, resonance, era, subEra,
                    config, shift='Nominal', **kwargs):
     _numerator = kwargs.pop('numerator', [])
     _denominator = kwargs.pop('denominator', [])
@@ -29,12 +29,17 @@ def run_conversion(spark, particle, resonance, era, subEra,
     testing = False
     print('Running conversion for', resonance, era, subEra, shift)
 
-    fnames = get_files(resonance, era, subEra, useParquet)
+    if useParquet:
+        fnames = list(registry.parquet(
+            particle, probe, resonance, era, subEra))
+    else:
+        fnames = registry.root(particle, probe, resonance, era, subEra)
+        fnames = ['root://eoscms.cern.ch/'+f for f in fnames]
 
     # for when we use root files instead of parquet
-    treename = 'tpTree/fitter_tree'
+    treename = registry.treename(particle, probe, resonance, era, subEra)
 
-    jobPath = os.path.join(particle, resonance, era, subEra)
+    jobPath = os.path.join(particle, probe, resonance, era, subEra)
     if shift:
         jobPath = os.path.join(jobPath, shift)
     if testing:
@@ -207,22 +212,28 @@ subEras = {
         # ultra legacy
         'Run2017_UL': ['Run2017', 'DY_madgraph'],
         'Run2018_UL': ['Run2018', 'DY_madgraph', 'DY_powheg'],
+        # ReReco
+        'Run2016': ['Run2016', 'DY_madgraph'],
+        'Run2017': ['Run2017', 'DY_madgraph'],
+        'Run2018': ['Run2018', 'DY_madgraph'],
         # alternatively split by data taking era
         # 'Run2017_UL': [f'Run2017{b}' for b in 'BCDEF']+['DY_madgraph'],
     },
     'JPsi': {
+        # ultra legacy
+        'Run2017_UL': ['Run2017', 'Jpsi'],
     },
 }
 
 
-def run_all(spark, particle, resonance, era,
+def run_all(spark, particle, probe, resonance, era,
             config, shift='Nominal', **kwargs):
     for subEra in subEras.get(resonance, {}).get(era, []):
-        run_conversion(spark, particle, resonance, era, subEra,
+        run_conversion(spark, particle, probe, resonance, era, subEra,
                        config, shift, **kwargs)
 
 
-def run_spark(particle, resonance, era, config, **kwargs):
+def run_spark(particle, probe, resonance, era, config, **kwargs):
     _shiftType = kwargs.pop('shiftType', [])
 
     spark = SparkSession\
@@ -237,14 +248,7 @@ def run_spark(particle, resonance, era, config, **kwargs):
     for shiftType in shiftTypes:
         if _shiftType and shiftType not in _shiftType:
             continue
-        run_all(spark, particle, resonance, era,
+        run_all(spark, particle, probe, resonance, era,
                 config.shift(shiftType), shift=shiftType, **kwargs)
 
     spark.stop()
-
-
-if __name__ == "__main__":
-    particle = 'muon'
-    resonance = 'Z'
-    era = 'Run2017_UL'
-    run_spark(particle, resonance, era)

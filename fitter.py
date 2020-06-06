@@ -92,7 +92,7 @@ def recover_simple(outFName):
     return not os.path.exists(outFName)
 
 
-def build_fit_jobs(particle, resonance, era,
+def build_fit_jobs(particle, probe, resonance, era,
                    config, **kwargs):
     _baseDir = kwargs.pop('baseDir', '')
     _numerator = kwargs.pop('numerator', [])
@@ -141,34 +141,41 @@ def build_fit_jobs(particle, resonance, era,
                 def get_jobs(fitType, shiftType, inType, outType):
                     _jobs = []
                     templateFName = os.path.join(_baseDir, 'flat',
-                                                 particle, resonance, era,
+                                                 particle, probe,
+                                                 resonance, era,
                                                  mcSubEra, inType,
                                                  extEffName+'.root')
                     outFName = os.path.join(_baseDir, 'fits_data',
-                                            particle, resonance, era,
+                                            particle, probe,
+                                            resonance, era,
                                             outType, effName,
                                             binName+'.root')
                     inFName = os.path.join(_baseDir, 'flat',
-                                           particle, resonance, era,
+                                           particle, probe,
+                                           resonance, era,
                                            dataSubEra, inType,
                                            extEffName+'.root')
                     plotDir = os.path.join(_baseDir, 'plots',
-                                           particle, resonance, era,
+                                           particle, probe,
+                                           resonance, era,
                                            'fits_data',
                                            outType, effName)
                     if doData and process(outFName):
                         _jobs += [(outFName, inFName, binName, templateFName,
                                    plotDir, fitType, 'data', shiftType)]
                     outFName = os.path.join(_baseDir, 'fits_mc',
-                                            particle, resonance, era,
+                                            particle, probe,
+                                            resonance, era,
                                             outType, effName,
                                             binName+'.root')
                     inFName = os.path.join(_baseDir, 'flat',
-                                           particle, resonance, era,
+                                           particle, probe,
+                                           resonance, era,
                                            mcSubEra, inType,
                                            extEffName+'.root')
                     plotDir = os.path.join(_baseDir, 'plots',
-                                           particle, resonance, era,
+                                           particle, probe,
+                                           resonance, era,
                                            'fits_mc',
                                            outType, effName)
                     # there is no need to fit MC for templates

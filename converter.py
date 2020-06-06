@@ -6,7 +6,7 @@ from pyspark.sql import SparkSession
 from muon_definitions import (get_allowed_sub_eras)
 
 
-def run_convert(spark, particle, resonance, era, subEra):
+def run_convert(spark, particle, probe, resonance, era, subEra):
     '''
     Converts a directory of root files into parquet
     '''
@@ -49,7 +49,7 @@ def run_convert(spark, particle, resonance, era, subEra):
                      .parquet(outname)
 
 
-def run_all(particle, resonance, era):
+def run_all(particle, probe, resonance, era):
     subEras = get_allowed_sub_eras(resonance, era)
 
     local_jars = ','.join([
@@ -70,7 +70,7 @@ def run_all(particle, resonance, era):
     print(sc.getConf().toDebugString())
 
     for subEra in subEras:
-        print('Converting', particle, resonance, era, subEra)
-        run_convert(spark, particle, resonance, era, subEra)
+        print('Converting', particle, probe, resonance, era, subEra)
+        run_convert(spark, particle, probe, resonance, era, subEra)
 
     spark.stop()
