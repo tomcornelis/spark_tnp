@@ -102,6 +102,11 @@ def add_common_particle(parser):
                         help='Particle for scalefactors')
 
 
+def add_common_probe(parser):
+    parser.add_argument('probe', choices=['generalTracks', 'standAloneMuons'],
+                        help='Probe for scalefactors')
+
+
 def add_common_resonance(parser):
     allowed = sorted(get_allowed_resonances())
     parser.add_argument('resonance', choices=allowed,
@@ -138,6 +143,7 @@ def parse_command_line(argv):
         help='Convert ROOT to parquet',
     )
     add_common_particle(parser_convert)
+    add_common_probe(parser_convert)
     add_common_resonance(parser_convert)
     add_common_era(parser_convert)
     add_common_options(parser_convert)
@@ -147,6 +153,7 @@ def parse_command_line(argv):
         help='Flatten to histograms',
     )
     add_common_particle(parser_flatten)
+    add_common_probe(parser_flatten)
     add_common_resonance(parser_flatten)
     add_common_era(parser_flatten)
     add_common_config(parser_flatten)
@@ -158,6 +165,7 @@ def parse_command_line(argv):
         help='Fit pass/fail histograms',
     )
     add_common_particle(parser_fit)
+    add_common_probe(parser_fit)
     add_common_resonance(parser_fit)
     add_common_era(parser_fit)
     add_common_config(parser_fit)
@@ -170,6 +178,7 @@ def parse_command_line(argv):
         help='Prepare efficiencies',
     )
     add_common_particle(parser_prepare)
+    add_common_probe(parser_prepare)
     add_common_resonance(parser_prepare)
     add_common_era(parser_prepare)
     add_common_config(parser_prepare)
@@ -209,7 +218,7 @@ def main(argv=None):
         raise NotImplementedError
     elif args.command == 'flatten':
         from flattener import run_spark
-        run_spark(args.particle, args.resonance, args.era,
+        run_spark(args.particle, args.probe, args.resonance, args.era,
                   Configuration(args.config),
                   numerator=args.numerator, denominator=args.denominator,
                   shiftType=args.shiftType, baseDir=baseDir)
@@ -218,7 +227,7 @@ def main(argv=None):
         from fitter import run_single_fit, build_fit_jobs, build_condor_submit
         job_fn = run_single_fit
         jobs = build_fit_jobs(
-            args.particle, args.resonance, args.era,
+            args.particle, args.probe, args.resonance, args.era,
             Configuration(args.config),
             baseDir=baseDir,
             numerator=args.numerator,
@@ -236,6 +245,7 @@ def main(argv=None):
         job_fn = prepare
         jobs = build_prepare_jobs(
             args.particle,
+            args.probe,
             args.resonance,
             args.era,
             Configuration(args.config),
@@ -253,9 +263,10 @@ def main(argv=None):
         submit_dir = ''
         joblist = os.path.join(
             submit_dir,
-            '{}joblist_{}_{}_{}.txt'.format(
+            '{}joblist_{}_{}_{}_{}.txt'.format(
                 'test_' if test else '',
                 args.particle,
+                args.probe,
                 args.resonance,
                 args.era
             )
@@ -268,9 +279,10 @@ def main(argv=None):
             os.makedirs('condor', exist_ok=True)
         configpath = os.path.join(
             submit_dir,
-            '{}condor_{}_{}_{}.sub'.format(
+            '{}condor_{}_{}_{}_{}.sub'.format(
                 'test_' if test else '',
                 args.particle,
+                args.probe,
                 args.resonance,
                 args.era
             )
