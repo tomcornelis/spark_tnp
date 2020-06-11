@@ -2,11 +2,9 @@ from __future__ import print_function
 import os
 import subprocess
 import itertools
+import math
 
-from muon_definitions import (get_default_num_denom,
-                              get_data_mc_sub_eras,
-                              get_default_binning,
-                              get_default_binning_variables,
+from muon_definitions import (get_data_mc_sub_eras,
                               get_full_name, get_eff_name,
                               get_extended_eff_name)
 
@@ -33,36 +31,69 @@ def run_single_fit(outFName, inFName, binName, templateFName, plotDir,
         print('Error processing', binName, fitType, histType)
 
 
-def build_condor_submit(test=False):
+def build_condor_submit(joblist, test=False, jobsPerSubmit=1, njobs=1):
 
     # for now, hard coded for lxplus
     args = ['outFName', 'inFName', 'binName', 'templateFName',
             'plotDir', 'version', 'histType', 'shiftType']
-    files = ['env.sh', 'TagAndProbeFitter.py', 'run_single_fit.py',
+    files = ['env.sh', 'TagAndProbeFitter.py',
+             'run_single_fit.py',
              'RooCMSShape.cc', 'RooCMSShape.h',
              'tdrstyle.py', 'CMS_lumi.py']
+
+    if jobsPerSubmit > 1:
+        arguments = './run_multiple_fits.sh {} {} {}'.format(
+            joblist,
+            '$(ProcId)',
+            jobsPerSubmit,
+        )
+        queue = 'queue {}'.format(math.ceil(njobs/jobsPerSubmit))
+        files += [joblist, 'run_multiple_fits.sh']
+        flavour = 'longlunch'
+    else:
+        arguments = '/run_single_fit.py {}'.format(
+            ' '.join([f'$({a})' for a in args]),
+        )
+        queue = 'queue {} from {}'.format(
+            ','.join(args),
+            joblist,
+        )
+        flavour = 'espresso'
+
+    output = 'condor/job.$(ClusterId).$(ProcId).out' if test else '/dev/null'
+    error = 'condor/job.$(ClusterId).$(ProcId).err' if test else '/dev/null'
+    log = 'condor/job.$(ClusterId).$(ProcId).log' if test else '/dev/null'
+
     config = '''universe    = vanilla
 executable  = condor_wrapper.sh
-arguments   = ./run_single_fit.py {}
-transfer_input_files = {}
-output      = {}
-error       = {}
-log         = {}
-+JobFlavour = "espresso"
-queue {} from {}'''.format(
-        ' '.join([f'$({a})' for a in args]),
-        ','.join(files),
-        'condor/job.$(ClusterId).$(ProcId).out' if test else '/dev/null',
-        'condor/job.$(ClusterId).$(ProcId).err' if test else '/dev/null',
-        'condor/job.$(ClusterId).$(ProcId).log' if test else '/dev/null',
-        ','.join(args),
-        'test_joblist.txt' if test else 'joblist.txt',
+arguments   = {arguments}
+transfer_input_files = {files}
+output      = {output}
+error       = {error}
+log         = {log}
++JobFlavour = "{flavour}"
+{queue}'''.format(
+        arguments=arguments,
+        files=','.join(files),
+        output=output,
+        error=error,
+        log=log,
+        flavour=flavour,
+        queue=queue,
     )
 
     return config
 
 
-def build_fit_jobs(particle, resonance, era, **kwargs):
+def recover_simple(outFName):
+    '''
+    Recover if file doesn't exist
+    '''
+    return not os.path.exists(outFName)
+
+
+def build_fit_jobs(particle, resonance, era,
+                   config, **kwargs):
     _baseDir = kwargs.pop('baseDir', '')
     _numerator = kwargs.pop('numerator', [])
     _denominator = kwargs.pop('denominator', [])
@@ -70,23 +101,30 @@ def build_fit_jobs(particle, resonance, era, **kwargs):
     _shiftType = kwargs.pop('shiftType', [])
     _sampleType = kwargs.pop('sampleType', [])
     _efficiencyBin = kwargs.pop('efficiencyBin', [])
+    _recover = kwargs.pop('recover', False)
+    _recoverMode = kwargs.pop('recoverMode', 'simple')
     doData = (not _sampleType) or ('data' in _sampleType)
     doMC = (not _sampleType) or ('mc' in _sampleType)
 
     dataSubEra, mcSubEra = get_data_mc_sub_eras(resonance, era)
 
+    def process(outFName):
+        if _recover and _recoverMode == 'simple':
+            return recover_simple(outFName)
+        return True
+
     jobs = []
     # iterate through the efficiencies
-    definitions = get_default_num_denom()
-    binning = get_default_binning()
-    for num, denom in definitions:
+    efficiencies = config.efficiencies()
+    binning = config.binning()
+    for num, denom in efficiencies:
         if _numerator and num not in _numerator:
             continue
         if _denominator and denom not in _denominator:
             continue
 
         # iterate through the output binning structure
-        for variableLabels in get_default_binning_variables():
+        for variableLabels in config.binVariables():
             # iterate through the bin indices
             # this does nested for loops of the N-D binning (e.g. pt, eta)
             indices = [list(range(len(binning[variableLabel])-1))
@@ -118,7 +156,7 @@ def build_fit_jobs(particle, resonance, era, **kwargs):
                                            particle, resonance, era,
                                            'fits_data',
                                            outType, effName)
-                    if doData:
+                    if doData and process(outFName):
                         _jobs += [(outFName, inFName, binName, templateFName,
                                    plotDir, fitType, 'data', shiftType)]
                     outFName = os.path.join(_baseDir, 'fits_mc',
@@ -133,32 +171,24 @@ def build_fit_jobs(particle, resonance, era, **kwargs):
                                            particle, resonance, era,
                                            'fits_mc',
                                            outType, effName)
-                    if doMC:
+                    # there is no need to fit MC for templates
+                    # PDF based fits are:
+                    #   NominalOld, AltSigOld
+                    if doMC and process(outFName) and\
+                            fitType in ['NominalOld', 'AltSigOld']:
                         _jobs += [(outFName, inFName, binName, templateFName,
                                    plotDir, fitType, 'mc', shiftType)]
                     return _jobs
 
-                for fitType in ['Nominal', 'AltSig', 'AltBkg',
-                                'NominalOld', 'AltSigOld']:
+                for fitShift in config.fitShifts():
                     if (_fitType or _shiftType):
-                        if not (_fitType and fitType in _fitType):
+                        if not ((_fitType and fitShift in _fitType) or
+                                (_shiftType and fitShift in _shiftType)):
                             continue
-                    shiftType = 'Nominal'
-                    inType = 'Nominal'
-                    outType = fitType
-                    jobs += get_jobs(fitType, shiftType, inType, outType)
-
-                for shiftType in ['tagIsoUp', 'tagIsoDown',
-                                  'massBinUp', 'massBinDown',
-                                  'massRangeUp', 'massRangeDown']:
-                    if (_fitType or _shiftType):
-                        if not (_shiftType and shiftType in _shiftType):
-                            continue
-                    fitType = 'Nominal'
-                    inType = 'Nominal'
-                    if 'tagIso' in shiftType:
-                        inType = shiftType
-                    outType = shiftType
-                    jobs += get_jobs(fitType, shiftType, inType, outType)
+                    params = config.fitShift(fitShift)
+                    jobs += get_jobs(params['fitType'],
+                                     params['shiftType'],
+                                     params['inType'],
+                                     fitShift)
 
     return jobs

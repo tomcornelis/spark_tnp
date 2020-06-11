@@ -11,6 +11,7 @@ except ImportError:
     hasTQDM = False
 
 from muon_definitions import get_allowed_resonances, get_allowed_eras
+from config import Configuration
 
 
 # parallel processing
@@ -59,6 +60,8 @@ def add_common_multi(parser):
                         help='Don\'t run, just print number of jobs')
     parser.add_argument('--condor', action='store_true',
                         help='Prepare condor submit script')
+    parser.add_argument('--jobsPerSubmit', '-nj', type=int, default=1,
+                        help='Number of jobs to run per submit')
 
 
 def add_common_flatten(parser):
@@ -83,6 +86,15 @@ def add_common_fit(parser):
                         help='Filter by sample type (data, mc)')
     parser.add_argument('--efficiencyBin', nargs='*',
                         help='Filter by efficiency bin')
+    parser.add_argument('--recover', action='store_true',
+                        help='Auto recover failed fits')
+
+
+def add_common_prepare(parser):
+    parser.add_argument('--numerator', nargs='*',
+                        help='Filter by numerator')
+    parser.add_argument('--denominator', nargs='*',
+                        help='Filter by denominator')
 
 
 def add_common_particle(parser):
@@ -91,7 +103,7 @@ def add_common_particle(parser):
 
 
 def add_common_resonance(parser):
-    allowed = get_allowed_resonances()
+    allowed = sorted(get_allowed_resonances())
     parser.add_argument('resonance', choices=allowed,
                         help='Resonance for scalefactors')
 
@@ -101,9 +113,14 @@ def add_common_era(parser):
     allowed = []
     for r in a:
         allowed += get_allowed_eras(r)
-    allowed = set(allowed)
+    allowed = sorted(set(allowed))
     parser.add_argument('era', choices=allowed,
                         help='Scale factor set to produce')
+
+
+def add_common_config(parser):
+    parser.add_argument('config',
+                        help='Efficiency configuration file')
 
 
 def add_common_options(parser):
@@ -132,6 +149,7 @@ def parse_command_line(argv):
     add_common_particle(parser_flatten)
     add_common_resonance(parser_flatten)
     add_common_era(parser_flatten)
+    add_common_config(parser_flatten)
     add_common_options(parser_flatten)
     add_common_flatten(parser_flatten)
 
@@ -142,20 +160,22 @@ def parse_command_line(argv):
     add_common_particle(parser_fit)
     add_common_resonance(parser_fit)
     add_common_era(parser_fit)
+    add_common_config(parser_fit)
     add_common_options(parser_fit)
     add_common_multi(parser_fit)
     add_common_fit(parser_fit)
 
-    parser_plot = subparsers.add_parser(
-        'plot',
-        help='Plot fitted histograms',
+    parser_prepare = subparsers.add_parser(
+        'prepare',
+        help='Prepare efficiencies',
     )
-    add_common_particle(parser_plot)
-    add_common_resonance(parser_plot)
-    add_common_era(parser_plot)
-    add_common_options(parser_plot)
-    add_common_multi(parser_plot)
-    add_common_fit(parser_plot)
+    add_common_particle(parser_prepare)
+    add_common_resonance(parser_prepare)
+    add_common_era(parser_prepare)
+    add_common_config(parser_prepare)
+    add_common_options(parser_prepare)
+    add_common_multi(parser_prepare)
+    add_common_prepare(parser_prepare)
 
     return parser.parse_args(argv)
 
@@ -190,6 +210,7 @@ def main(argv=None):
     elif args.command == 'flatten':
         from flattener import run_spark
         run_spark(args.particle, args.resonance, args.era,
+                  Configuration(args.config),
                   numerator=args.numerator, denominator=args.denominator,
                   shiftType=args.shiftType, baseDir=baseDir)
         return 0
@@ -198,6 +219,7 @@ def main(argv=None):
         job_fn = run_single_fit
         jobs = build_fit_jobs(
             args.particle, args.resonance, args.era,
+            Configuration(args.config),
             baseDir=baseDir,
             numerator=args.numerator,
             denominator=args.denominator,
@@ -205,38 +227,56 @@ def main(argv=None):
             sampleType=args.sampleType,
             shiftType=args.shiftType,
             efficiencyBin=args.efficiencyBin,
+            recover=args.recover,
         )
         unit = 'fit'
         desc = 'Fitting'
-    elif args.command == 'plot':
-        from plotter import plot, build_plot_jobs
-        job_fn = plot
-        jobs = build_plot_jobs(
-            baseDir,
+    elif args.command == 'prepare':
+        from prepare import prepare, build_prepare_jobs
+        job_fn = prepare
+        jobs = build_prepare_jobs(
+            args.particle,
+            args.resonance,
+            args.era,
+            Configuration(args.config),
             numerator=args.numerator,
             denominator=args.denominator,
-            fitType=args.fitType,
-            sampleType=args.sampleType,
-            shiftType=args.shiftType,
-            efficiencyBin=args.efficiencyBin,
+            baseDir=baseDir,
         )
-        unit = 'plot'
-        desc = 'Plotting'
+        unit = 'efficiency'
+        desc = 'Preparing'
 
     if args.dryrun:
         print('Will run {} {} jobs'.format(len(jobs), args.command))
     elif args.condor:
         test = True
         submit_dir = ''
-        config = build_condor_submit(test=test)
+        joblist = os.path.join(
+            submit_dir,
+            '{}joblist_{}_{}_{}.txt'.format(
+                'test_' if test else '',
+                args.particle,
+                args.resonance,
+                args.era
+            )
+        )
+        config = build_condor_submit(joblist,
+                                     test=test,
+                                     jobsPerSubmit=args.jobsPerSubmit,
+                                     njobs=len(jobs))
         if test:
             os.makedirs('condor', exist_ok=True)
         configpath = os.path.join(
-            submit_dir, 'test_condor.sub' if test else 'condor.sub')
+            submit_dir,
+            '{}condor_{}_{}_{}.sub'.format(
+                'test_' if test else '',
+                args.particle,
+                args.resonance,
+                args.era
+            )
+        )
         with open(configpath, 'w') as f:
             f.write(config)
-        joblist = os.path.join(
-            submit_dir, 'test_joblist.txt' if test else 'joblist.txt')
         with open(joblist, 'w') as f:
             for job in jobs:
                 f.write(','.join([str(j) for j in job])+'\n')

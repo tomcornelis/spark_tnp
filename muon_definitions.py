@@ -1,11 +1,9 @@
 import os
-import glob
 import uproot
 import itertools
-import numpy as np
 from pyspark.sql import functions as F
 from pyspark.ml.feature import Bucketizer
-from pyspark.sql.types import *
+
 
 # allowed choices
 def get_allowed_resonances():
@@ -29,6 +27,8 @@ def get_allowed_eras(resonance):
             'Run2018',
         ],
         'JPsi': [
+            # heavy ion
+            'Run2016_HI_pPb_8TeV',
         ],
     }
     return eras.get(resonance, [])
@@ -51,6 +51,11 @@ def get_allowed_sub_eras(resonance, era):
                f'Run2018{b}' for b in 'ABCD']+['DY_madgraph'],
         },
         'JPsi': {
+            # ultra legacy
+            'Run2017_UL': ['Run2017'] + [
+                f'Run2017{b}' for b in 'BCDEF']+['Jpsi'],
+            # heavy ion
+            'Run2016_HI_pPb_8TeV': ['Run2016'],
         },
     }
     return subEras.get(resonance, {}).get(era, [])
@@ -64,140 +69,18 @@ def get_data_mc_sub_eras(resonance, era):
             # TODO: decide how to handle alternate generators
             'Run2018_UL': ['Run2018', 'DY_madgraph'],
             # rereco
-            'Run2016': ['Run2017', 'DY_madgraph'],
+            'Run2016': ['Run2016', 'DY_madgraph'],
             'Run2017': ['Run2017', 'DY_madgraph'],
-            'Run2018': ['Run2017', 'DY_madgraph'],
-        }
-    }
-    return eraMap.get(resonance, {}).get(era, [None, None])
-
-
-# build the file lists once
-def _build_parquet_file_lists(standalone=False):
-    # hdfs analytix
-    def _hdfs_path(resonance, era, subEra):
-        baseDir = '/cms/muon_pog/parquet'
-        if standalone:
-            return os.path.join(
-                baseDir, resonance, era, subEra, 'tnpSta.parquet')
-        else:
-            return os.path.join(
-                baseDir, resonance, era, subEra, 'tnp.parquet')
-    # this is always the same, so automate it
-    fnamesMap = {
-        _r: {
-            _e: {
-                _s: _hdfs_path(_r, _e, _s)
-                for _s in get_allowed_sub_eras(_r, _e)
-            } for _e in get_allowed_eras(_r)
-        } for _r in get_allowed_resonances()
-    }
-    # then we need to replace the data RunXXXX with a list
-    # of all the data sub eras
-    for _r in fnamesMap:
-        for _e in fnamesMap[_r]:
-            combined = _e.split('_')[0]
-            subEras = [k for k in fnamesMap[_r][_e].keys()
-                       if k != combined and k.startswith(combined)]
-            fnamesMap[_r][_e][combined] = [
-                fnamesMap[_r][_e][_s]
-                for _s in subEras]
-    return fnamesMap
-
-
-def _build_root_file_lists():
-    # there is no good pattern for these, manually set them all
-    def _UL17path(era):
-        baseDir = os.path.join('/eos/cms/store/group/phys_muon',
-                               'TagAndProbe/ULRereco/2017/102X')
-        return [f for f in glob.glob(
-            os.path.join(baseDir, era, 'tnpZ*.root'))
-            if 'hadd' not in f]
-
-    def _UL18path(era):
-        baseDir = os.path.join('/eos/cms/store/group/phys_muon',
-                               'TagAndProbe/ULRereco/2018/102X')
-        return [f for f in glob.glob(
-            os.path.join(baseDir, era, 'tnpZ*.root'))
-            if 'hadd' not in f]
-
-    # for these, I have split the merged root files into
-    # smaller chuncks for processing
-    # the exception is DY for ReReco 2016, which was already split
-    # NOTE: No promise that these will be kept on disk
-    def _split_path(resonance, era, subEra):
-        baseDir = os.path.join('/eos/cms/store/group/phys_muon',
-                               'dntaylor/TagAndProbe_split')
-        return glob.glob(os.path.join(baseDir, resonance, era,
-                                      subEra, '*.root'))
-    fnamesMap = {
-        'Z': {
-            'Run2017_UL': {
-                'Run2017B': _UL17path('Run2017B'),
-                'Run2017C': _UL17path('Run2017C'),
-                'Run2017D': _UL17path('Run2017D'),
-                'Run2017E': _UL17path('Run2017E_99Percent'),
-                'Run2017F': _UL17path('Run2017F_99Percent'),
-                'DY_madgraph': _UL17path('DY_M50_pdfwgt'),
-            },
-            'Run2018_UL': {
-                'Run2018A': _UL18path('SingleMuon_Run2018A'),
-                'Run2018B': _UL18path('SingleMuon_Run2018B'),
-                'Run2018C': _UL18path('SingleMuon_Run2018C'),
-                'Run2018D': _UL18path('SingleMuon_Run2018D'),
-                'DY_madgraph': _UL18path('DY_M50_Madgraph'),
-                'DY_powheg': _UL18path('DY_M50to120_Powheg'),
-            },
+            'Run2018': ['Run2018', 'DY_madgraph'],
         },
         'JPsi': {
+            # ultra legacy
+            'Run2017_UL': ['Run2017', 'Jpsi'],
+            # heavy ion
+            'Run2016_HI_pPb_8TeV': ['Run2016', None],
         },
     }
-
-    for resonance in ['Z']:
-        for era in ['Run2016', 'Run2017', 'Run2018']:
-            fnamesMap[resonance][era] = {}
-            for subEra in get_allowed_sub_eras(resonance, era):
-                if era == subEra:
-                    continue
-                fnamesMap[resonance][era][subEra] = _split_path(
-                    resonance, era, subEra)
-    # override Run2016 DY_madgraph
-    fnamesMap['Z']['Run2016']['DY_madgraph'] = glob.glob(
-        os.path.join(
-            '/eos/cms/store/group/phys_muon/hbrun',
-            'muonPOGtnpTrees/MCDR80X/DY_Summer16PremixMoriond/*.root'
-        )
-    )
-
-    return fnamesMap
-
-
-_parquet_fnamesMap = _build_parquet_file_lists()
-_parquet_sta_fnamesMap = _build_parquet_file_lists(standalone=True)
-_root_fnamesMap = _build_root_file_lists()
-
-
-def get_files(resonance, era, subEra, useParquet=False, standalone=False):
-    '''
-    Get the list of centrally produced tag and probe trees.
-    Some datasets have been converted to the parquet format
-    (which is much more efficient).
-    '''
-    if useParquet:
-        if standalone:
-            fnames = _parquet_sta_fnamesMap.get(
-                resonance, {}).get(era, {}).get(subEra, '')
-        else:
-            fnames = _parquet_fnamesMap.get(
-                resonance, {}).get(era, {}).get(subEra, '')
-    else:
-
-        fnames = [
-            'root://eoscms.cern.ch/'+f for f in
-            _root_fnamesMap.get(resonance, {}).get(era, {}).get(subEra, [])
-        ]
-
-    return fnames
+    return eraMap.get(resonance, {}).get(era, [None, None])
 
 
 def get_pileup(resonance, era, subEra):
@@ -313,241 +196,6 @@ def get_selection_dataframe(df, selection_name, selection_func):
     from the function `selection_func`.
     '''
     return df.withColumn(selection_name, selection_func(df))
-
-def get_combinedID_dataframe(df, selection_name, colName1, colName2):
-    '''
-    Produces a new dataframe with a new column `selection_name`
-    from the function `selection_func`.
-    '''
-    combinedID_udf = F.udf(lambda ID1,ID2 : (ID1==1 and ID2==1), BooleanType())
-    return df.withColumn(selection_name, combinedID_udf(df[colName1],df[colName2]))
-
-# Customization for Muon POG's officially supported IDs
-_idLabels = ['LooseID', 'MediumID', 'MediumPromptID', 'TightID', 'SoftID','LooseIDandMiniIso','TightIDandMiniIso']
-_isoLabels = ['LooseRelIso', 'TightRelIso','MiniIsolationLoose','MiniIsolationTight']
-_idLabelsTuneP = ['HighPtID', 'TrkHighPtID']
-_isoLabelsTuneP = ['LooseRelTkIso', 'TightRelTkIso']
-_denomLabels = ['genTracks', 'TrackerMuons']
-
-
-_definitionMap = {
-    'genTracks': lambda df: F.lit(True),
-    'TrackerMuons': lambda df: df.TM == 1,
-    'LooseID': lambda df: df.CutBasedIdLoose == 1,
-    'MediumID': lambda df: df.CutBasedIdMedium == 1,
-    'MediumPromptID': lambda df: df.CutBasedIdMediumPrompt == 1,
-    'TightID': lambda df: df.CutBasedIdTight == 1,
-    'SoftID': lambda df: df.SoftCutBasedId == 1,
-    'HighPtID': lambda df: df.CutBasedIdGlobalHighPt_new == 1,
-    'TrkHighPtID': lambda df: df.CutBasedIdTrkHighPt == 1,
-    'LooseRelIso': lambda df: df.combRelIsoPF04dBeta < 0.25,
-    'TightRelIso': lambda df: df.combRelIsoPF04dBeta < 0.15,
-    'LooseRelTkIso': lambda df: df.relTkIso < 0.10,
-    'TightRelTkIso': lambda df: df.relTkIso < 0.05,
-    'MiniIsolationLoose' : lambda df : df.MiniIsolation <0.4, 
-    'MiniIsolationTight' : lambda df : df.MiniIsolation <0.1,
-    #'LooseIDandMiniIso' : combineID_udf(df.MiniIsolationLoose, df.CutBasedIdLoose), #lambda df : df.MiniIsolationLoose == 1 & df.CutBasedIdLoose == 1, 
-    #'TightIDandMiniIso' : combineID_udf(df.MiniIsolationTight, df.CutBasedIdTight), #lambda df : df.MiniIsolationTight == 1 & df.CutBasedIdTight == 1, 
-
-}
-
-_CombinedDefinitionMap = {
-    'LooseIDandMiniIso' : ['MiniIsolationLoose', 'CutBasedIdLoose'], 
-    'TightIDandMiniIso' : ['MiniIsolationTight', 'CutBasedIdTight'], 
-}
-
-# map of alternative namings used for selections (for isolation)
-_selectionMap = {
-    'TightIDandIPCut': 'TightID',
-    'HighPtIDandIPCut': 'HighPtID',
-    'TrkHighPtIDandIPCut': 'TrkHighPtID',
-}
-
-# this is a helper to build the num/denom pairs
-# we don't want to do all possible combinatorics
-# a product between the first entry (nums)
-# and the second entry (denoms) will be performed
-_defs = [
-#    [
-#        ['TrackerMuons'],
-#        ['genTracks'],
-#    ],
-#    [
-#        ['LooseID', 'MediumID', 'MediumPromptID', 'TightID',
-#         'SoftID', 'HighPtID', 'TrkHighPtID','LooseIDandMiniIso','TightIDandMiniIso'],
-#        ['genTracks', 'TrackerMuons'],
-#    ],
-#    [
-#        ['LooseRelIso'],
-#        ['LooseID', 'MediumID', 'MediumPromptID', 'TightIDandIPCut'],
-#    ],
-#    [
-#        ['TightRelIso'],
-#        ['MediumID', 'MediumPromptID', 'TightIDandIPCut'],
-#    ],
-#    [
-#        ['LooseRelTkIso', 'TightRelTkIso'],
-#        ['HighPtIDandIPCut', 'TrkHighPtIDandIPCut'],
-#    ],
-    [
-         ['TightID'],
-         ['genTracks', 'TrackerMuons'],
-    ],
-    [
-        ['TightIDandMiniIso'],
-        ['TightID'],
-    ],
-    [
-        ['LooseIDandMiniIso'],
-        ['LooseID'],
-    ],
-]
-
-# define the numerator/denominator definitions
-# a fit will be done for each num/denom pair
-_definitions = []
-
-for num_denoms in _defs:
-    for num, denom in itertools.product(*num_denoms):
-        _definitions += [(num, denom)]
-
-# bin definitions
-_binning = {
-    'pt': np.array([15, 20, 25, 30, 40, 50, 60, 120]),
-    'abseta': np.array([0, 0.9, 1.2, 2.1, 2.4]),
-    'eta': np.array([-2.4, -2.1, -1.6, -1.2, -0.9, -0.3, -0.2,
-                     0.2, 0.3, 0.9, 1.2, 1.6, 2.1, 2.4]),
-    'nvtx': np.array(range(10, 85, 5)),
-    'njets': np.array([-0.5, 0.5, 1.5, 2.5, 3.5, 4.5]),
-    'mass': np.array(range(60*4, 130*4+1, 1)) * 0.25,
-}
-_binning['mcMass'] = _binning['mass']
-
-# maps between custom variable names and names in tree
-_variableMap = {
-    'nvtx': 'tag_nVertices',
-    'njets': 'pair_nJets30',
-}
-
-_variableMapTuneP = {
-    'pt': 'pair_newTuneP_probe_pt',
-    'nvtx': 'tag_nVertices',
-    'njets': 'pair_nJets30',
-    'mass': 'pair_newTuneP_mass',
-}
-
-# the binnings to produce efficiencies in
-_binVariables = [
-    ('abseta', 'pt', ),
-    # ('pt', ),
-    # ('eta', ),
-    # ('nvtx', ),
-    # ('njets', ),
-]
-
-# the variable to fit
-_fitVariable = 'mass'
-_fitVariableGen = 'mcMass'
-
-
-def get_default_fit_variable(gen=False):
-    '''
-    Return the fit variable
-    '''
-    return _fitVariableGen if gen else _fitVariable
-
-
-def get_default_binning():
-    '''
-    Return the default binning map
-    '''
-    return _binning
-
-
-def get_default_binning_variables():
-    '''
-    Return the binning variables used by the Muon POG
-    '''
-    return _binVariables
-
-
-def get_default_variable_name(variable, tuneP=False):
-    '''
-    Return the map between variable names and
-    name in the tree.
-    '''
-    _map = _variableMapTuneP if tuneP else _variableMap
-    return _map.get(variable, variable)
-
-
-def get_default_ids(tuneP=False):
-    '''
-    Returns the list of the Muon POG's
-    officially supported IDs
-    '''
-    return _idLabelsTuneP if tuneP else _idLabels
-
-
-def get_default_isos(tuneP=False):
-    '''
-    Returns the list of the Muon POG's
-    officially supported isolations
-    '''
-    return _isoLabelsTuneP if tuneP else _isoLabels
-
-
-def get_default_denoms():
-    '''
-    Returns the list of the Muon POG's
-    officially supported denominators
-    '''
-    return _denomLabels
-
-
-def get_default_num_denom():
-    '''
-    This function returns the Muon POG's
-    officially supported id/iso efficiencies.
-    '''
-    return _definitions
-
-
-def get_default_selection(selection_name):
-    '''
-    The function returns a function to produce
-    a new column with the Muon POG's officially supported
-    ids/isos given the standard name.
-    '''
-
-    return _definitionMap.get(
-        _selectionMap.get(selection_name, selection_name), None)
-
-
-def get_default_selections_dataframe(df):
-    '''
-    Produces a dataframe with all of the Muon POG's
-    officially supported id/isos.
-    '''
-    MiniIsoAEff_udf = F.udf(lambda abseta : 0.0735 if abseta <= 0.8 else (0.0619 if abseta <= 1.3 else (0.0465 if  abseta <= 2.0 else (0.0433 if abseta <=2.2 else 0.0577) ) ) , FloatType())
-    MiniIsoRiso2_udf = F.udf(lambda pt : max(0.05, min(0.2, 10.0/pt)), FloatType())
-    MiniIsolation_udf = F.udf(lambda charged, photon, neutral, corr, pt : (charged+max(0.0,photon+neutral-corr))/pt , FloatType())
-    df = df.withColumn('MiniIsoAEff', MiniIsoAEff_udf(df.abseta) )
-    df = df.withColumn('MiniIso_riso2', MiniIsoRiso2_udf(df.pt) )
-    df = df.withColumn('MiniIso_CorrectedTerm', F.col('fixedGridRhoFastjetCentralNeutral')*F.col('MiniIsoAEff')*(F.col('MiniIso_riso2')/0.09) )
-    df = df.withColumn('MiniIsolation', MiniIsolation_udf(df.miniIsoCharged, df.miniIsoPhotons, df.miniIsoNeutrals, df.MiniIso_CorrectedTerm, df.pt) ) 
-    
-    for sel_name, sel_func in _definitionMap.items():
-        df = get_selection_dataframe(df, sel_name, sel_func)
-        
-    # and for combined ID
-    for comb_sel_name, colNames in _CombinedDefinitionMap.items():
-        df = get_combinedID_dataframe(df, comb_sel_name, colNames[0], colNames[1])
-        
-    # and renamed for convenience
-    for alt_sel_name, sel_name in _selectionMap.items():
-        df = df.withColumn(alt_sel_name, df[sel_name])
-    #print(df.dtypes)
-    return df
 
 
 # common names for the fit bins
