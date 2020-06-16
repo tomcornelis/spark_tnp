@@ -73,11 +73,11 @@ def run_conversion(spark, particle, probe, resonance, era, subEra,
     defDF = baseDF
     # START -- add columns with miniIsolation information
     MiniIsoAEff_udf = F.udf(lambda abseta:
-                            0.0735 if abseta <= 0.8 else (
-                            0.0619 if abseta <= 1.3 else (
-                            0.0465 if abseta <= 2.0 else (
-                            0.0433 if abseta <= 2.2 else 
-                            0.0577))),
+                            0.0735 if abseta <= 0.8
+                            else (0.0619 if abseta <= 1.3
+                                  else (0.0465 if abseta <= 2.0
+                                        else (0.0433 if abseta <= 2.2
+                                              else 0.0577))),
                             types.FloatType())
     MiniIsoRiso2_udf = F.udf(lambda pt:
                              max(0.05, min(0.2, 10.0/pt)),
@@ -88,9 +88,9 @@ def run_conversion(spark, particle, probe, resonance, era, subEra,
     defDF = defDF.withColumn('MiniIsoAEff', MiniIsoAEff_udf(defDF.abseta))
     defDF = defDF.withColumn('MiniIso_riso2', MiniIsoRiso2_udf(defDF.pt))
     defDF = defDF.withColumn('MiniIso_CorrectedTerm',
-                             (F.col('fixedGridRhoFastjetCentralNeutral')*
-                             F.col('MiniIsoAEff')*
-                             F.col('MiniIso_riso2')/0.09))
+                             (F.col('fixedGridRhoFastjetCentralNeutral') *
+                              F.col('MiniIsoAEff') *
+                              F.col('MiniIso_riso2')/0.09))
     defDF = defDF.withColumn('MiniIsolation',
                              MiniIsolation_udf(defDF.miniIsoCharged,
                                                defDF.miniIsoPhotons,

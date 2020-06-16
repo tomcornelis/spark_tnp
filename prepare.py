@@ -118,16 +118,16 @@ def prepare(baseDir, particle, probe, resonance, era,
     dataSubEra, mcSubEra = get_data_mc_sub_eras(resonance, era)
     systList = {
         'SF': {
-            'fitTypes': ['AltBkg', 'AltSig'], 
+            'fitTypes': ['AltBkg', 'AltSig'],
             'shiftTypes': ['tagIso', 'massBin']
         },
         'dataEff': {
-            'fitTypes': ['AltBkg','AltSig'], 
+            'fitTypes': ['AltBkg', 'AltSig'],
             'shiftTypes': []
         },
         'mcEff': {
-            'fitTypes': [], 
-            'shiftTypes': ['tagIso','massBin']
+            'fitTypes': [],
+            'shiftTypes': ['tagIso', 'massBin']
         }
     }
 
@@ -221,13 +221,8 @@ def prepare(baseDir, particle, probe, resonance, era,
                                     resonance, era,
                                     fitType, effName,
                                     binName + '.root')
-        mcFNameFit = os.path.join(baseDir, 'fits_mc',
-                                  particle, probe,
-                                  resonance, era,
-                                  fitType, effName,
-                                  binName + '.root')
         sf, sf_stat, dataEff, dataStat, mcEff, mcStat = getSF(
-            binName, dataFNameFit) 
+            binName, dataFNameFit)
         sf_syst = getSyst(binName, dataFNameFit,
                           dataEff, mcEff,
                           systList['SF']['fitTypes'],
@@ -252,14 +247,14 @@ def prepare(baseDir, particle, probe, resonance, era,
             val_args = index + [val]
             err_args = index + [err]
             hist.SetBinContent(*val_args)
-            if err >= 0: 
+            if err >= 0:
                 hist.SetBinError(*err_args)
 
         set_bin(hist, index, sf, sf_err)
         set_bin(hist_stat, index, sf, sf_stat)
         set_bin(hist_syst, index, sf, sf_syst['combined'])
         for iKey in sf_syst.keys():
-            set_bin(histList_syst[iKey], index, sf_syst[iKey],-1)
+            set_bin(histList_syst[iKey], index, sf_syst[iKey], -1)
 
         set_bin(hist_dataEff, index, dataEff, dataErr)
         set_bin(hist_dataEff_stat, index, dataEff, dataStat)
