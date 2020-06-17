@@ -9,8 +9,6 @@
         "TightID": "CutBasedIdTight == 1",
         "MiniIsolationLoose" : "MiniIsolation < 0.4",
         "MiniIsolationTight" : "MiniIsolation < 0.1",
-        "LooseIDandMiniIso" : "CutBasedIdLoose == 1 and MiniIsolation < 0.4",
-        "TightIDandMiniIso" : "CutBasedIdTight == 1 and MiniIsolation < 0.1"
     },
     "binning": {
         "pt": [15, 20, 25, 30, 40, 50, 60, 120],

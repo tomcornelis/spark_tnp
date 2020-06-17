@@ -87,16 +87,16 @@ def getSF(binName, fname):
     return sf, sf_err, dataEff, dataErr, mcEff, mcErr
 
 
-def getSyst(binName, datafname, dataEff, mcEff, FitTypes, ShiftTypes):
+def getSyst(binName, datafname, dataEff, mcEff, fitTypes, shiftTypes):
     syst = {}
     syst_sq = 0
-    for isyst in FitTypes:
+    for isyst in fitTypes:
         systfname = datafname.replace('Nominal', isyst)
         tmpEff, tmpErr = getDataEff(binName, systfname)
         syst.update({isyst: math.fabs(tmpEff - dataEff)})
         syst_sq += (tmpEff - dataEff)**2
 
-    for isyst in ShiftTypes:
+    for isyst in shiftTypes:
         systUpfname = datafname.replace('Nominal', isyst+'Up')
         systDnfname = datafname.replace('Nominal', isyst+'Down')
         tmpEffUp, tmpErr = getEff(binName, systUpfname)
