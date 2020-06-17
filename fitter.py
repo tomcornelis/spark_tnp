@@ -51,7 +51,7 @@ def build_condor_submit(joblist, test=False, jobsPerSubmit=1, njobs=1):
         files += [joblist, 'run_multiple_fits.sh']
         flavour = 'longlunch'
     else:
-        arguments = '/run_single_fit.py {}'.format(
+        arguments = './run_single_fit.py {}'.format(
             ' '.join([f'$({a})' for a in args]),
         )
         queue = 'queue {} from {}'.format(

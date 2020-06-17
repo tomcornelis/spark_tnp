@@ -12,7 +12,8 @@ from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 
 from registry import registry
-from muon_definitions import (get_weighted_dataframe,
+from muon_definitions import (get_miniIso_dataframe,
+                              get_weighted_dataframe,
                               get_binned_dataframe,
                               get_extended_eff_name,
                               get_full_name)
@@ -66,10 +67,13 @@ def run_conversion(spark, particle, probe, resonance, era, subEra,
         baseDF = spark.read.format("root")\
                       .option('tree', treename)\
                       .load(fnames)
+    # create the miniIsoaltion columns
+    miniIsoDF = get_miniIso_dataframe(baseDF)
 
     # create the definitions columns
     definitions = config.definitions()
-    defDF = baseDF
+    defDF = miniIsoDF
+
     for d in definitions:
         defDF = defDF.withColumn(d, F.expr(definitions[d]))
 

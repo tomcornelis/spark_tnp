@@ -87,6 +87,27 @@ def getSF(binName, fname):
     return sf, sf_err, dataEff, dataErr, mcEff, mcErr
 
 
+def getSyst(binName, datafname, dataEff, mcEff, fitTypes, shiftTypes):
+    syst = {}
+    syst_sq = 0
+    for isyst in fitTypes:
+        systfname = datafname.replace('Nominal', isyst)
+        tmpEff, tmpErr = getDataEff(binName, systfname)
+        syst.update({isyst: math.fabs(tmpEff - dataEff)})
+        syst_sq += (tmpEff - dataEff)**2
+
+    for isyst in shiftTypes:
+        systUpfname = datafname.replace('Nominal', isyst+'Up')
+        systDnfname = datafname.replace('Nominal', isyst+'Down')
+        tmpEffUp, tmpErr = getEff(binName, systUpfname)
+        tmpEffDn, tmpErr = getEff(binName, systDnfname)
+        syst.update({isyst: (math.fabs(tmpEffUp-tmpEffDn)/2)})
+        syst_sq += ((tmpEffUp-tmpEffDn)/2)**2
+
+    syst.update({'combined': (syst_sq)**0.5})
+    return syst
+
+
 def prepare(baseDir, particle, probe, resonance, era,
             config, num, denom, variableLabels):
     hists = {}
@@ -95,6 +116,20 @@ def prepare(baseDir, particle, probe, resonance, era,
     extEffName = get_extended_eff_name(num, denom, variableLabels)
     binning = config.binning()
     dataSubEra, mcSubEra = get_data_mc_sub_eras(resonance, era)
+    systList = {
+        'SF': {
+            'fitTypes': ['AltBkg', 'AltSig'],
+            'shiftTypes': ['tagIso', 'massBin', 'massRange']
+        },
+        'dataEff': {
+            'fitTypes': ['AltBkg', 'AltSig'],
+            'shiftTypes': ['tagIso', 'massBin', 'massRange']
+        },
+        'mcEff': {
+            'fitTypes': [],
+            'shiftTypes': ['tagIso', 'massBin', 'massRange']
+        }
+    }
 
     def get_variable_name_pretty(variableLabel):
         variables = config.variables()
@@ -128,6 +163,8 @@ def prepare(baseDir, particle, probe, resonance, era,
         hist.GetZaxis().SetTitle('Scalefactor')
     hist_stat = hist.Clone(extEffName+'_stat')
     hist_syst = hist.Clone(extEffName+'_syst')
+    histList_syst = {'combined': hist.Clone(effName+'_combinedSyst')}
+
     hist_dataEff = hist.Clone(extEffName+'_efficiencyData')
     if nVars == 1:
         hist_dataEff.GetYaxis().SetTitle('Efficiency')
@@ -135,9 +172,25 @@ def prepare(baseDir, particle, probe, resonance, era,
         hist_dataEff.GetZaxis().SetTitle('Efficiency')
     hist_dataEff_stat = hist_dataEff.Clone(extEffName+'_efficiencyData_stat')
     hist_dataEff_syst = hist_dataEff.Clone(extEffName+'_efficiencyData_syst')
+    histList_dataEff_syst = {
+        'combined': hist_dataEff.Clone(effName+'_efficiencyData_combinedSyst')
+    }
     hist_mcEff = hist_dataEff.Clone(extEffName+'_efficiencyMC')
     hist_mcEff_stat = hist_dataEff.Clone(extEffName+'_efficiencyMC_stat')
     hist_mcEff_syst = hist_dataEff.Clone(extEffName+'_efficiencyMC_syst')
+    histList_mcEff_syst = {
+        'combined': hist_dataEff.Clone(effName+'_efficiencyMC_combinedSyst')
+    }
+    for iSyst in itertools.chain(systList['SF']['fitTypes'],
+                                 systList['SF']['shiftTypes']):
+        histList_syst.update({iSyst: hist.Clone(effName+'_'+iSyst)})
+    for iSyst in itertools.chain(systList['dataEff']['fitTypes'],
+                                 systList['dataEff']['shiftTypes']):
+        histList_dataEff_syst.update({iSyst: hist.Clone(effName+'_'+iSyst)})
+    for iSyst in itertools.chain(systList['mcEff']['fitTypes'],
+                                 systList['mcEff']['shiftTypes']):
+        histList_mcEff_syst.update({iSyst: hist.Clone(effName+'_'+iSyst)})
+
     varName = get_variables_name(variableLabels)
 
     # iterate through the bin indices
@@ -170,34 +223,50 @@ def prepare(baseDir, particle, probe, resonance, era,
                                     binName + '.root')
         sf, sf_stat, dataEff, dataStat, mcEff, mcStat = getSF(
             binName, dataFNameFit)
-        sf_syst = 0.0
-        dataSyst = 0.0
-        mcSyst = 0.0
-        sf_err = (sf_stat**2 + sf_syst**2)**0.5
-        dataErr = (dataStat**2 + dataSyst**2)**0.5
-        mcErr = (mcStat**2 + mcSyst**2)**0.5
+        sf_syst = getSyst(binName, dataFNameFit,
+                          dataEff, mcEff,
+                          systList['SF']['fitTypes'],
+                          systList['SF']['shiftTypes'])
+        dataSyst = getSyst(binName, dataFNameFit,
+                           dataEff, mcEff,
+                           systList['dataEff']['fitTypes'],
+                           systList['dataEff']['shiftTypes'])
+        mcSyst = getSyst(binName, dataFNameFit,
+                         dataEff, mcEff,
+                         systList['mcEff']['fitTypes'],
+                         systList['mcEff']['shiftTypes'])
+        sf_err = (sf_stat**2 + sf_syst['combined']**2)**0.5
+        dataErr = (dataStat**2 + dataSyst['combined']**2)**0.5
+        mcErr = (mcStat**2 + mcSyst['combined']**2)**0.5
         _out['value'] = sf
         _out['stat'] = sf_stat
-        _out['syst'] = sf_syst
+        _out['syst'] = sf_syst['combined']
 
         def set_bin(hist, index, val, err):
             index = list(index)
             val_args = index + [val]
             err_args = index + [err]
             hist.SetBinContent(*val_args)
-            hist.SetBinError(*err_args)
+            if err >= 0:
+                hist.SetBinError(*err_args)
 
         set_bin(hist, index, sf, sf_err)
         set_bin(hist_stat, index, sf, sf_stat)
-        set_bin(hist_syst, index, sf, sf_syst)
+        set_bin(hist_syst, index, sf, sf_syst['combined'])
+        for iKey in sf_syst.keys():
+            set_bin(histList_syst[iKey], index, sf_syst[iKey], -1)
 
         set_bin(hist_dataEff, index, dataEff, dataErr)
         set_bin(hist_dataEff_stat, index, dataEff, dataStat)
-        set_bin(hist_dataEff_syst, index, dataEff, dataSyst)
+        set_bin(hist_dataEff_syst, index, dataEff, dataSyst['combined'])
+        for iKey in dataSyst.keys():
+            set_bin(histList_dataEff_syst[iKey], index, dataSyst[iKey], -1)
 
         set_bin(hist_mcEff, index, mcEff, mcErr)
         set_bin(hist_mcEff_stat, index, mcEff, mcStat)
-        set_bin(hist_mcEff_syst, index, mcEff, mcSyst)
+        set_bin(hist_mcEff_syst, index, mcEff, mcSyst['combined'])
+        for iKey in mcSyst.keys():
+            set_bin(histList_mcEff_syst[iKey], index, mcSyst[iKey], -1)
 
     hists[extEffName] = hist
     hists[extEffName+'_stat'] = hist_stat
@@ -208,6 +277,12 @@ def prepare(baseDir, particle, probe, resonance, era,
     hists[extEffName+'_efficiencyMC'] = hist_mcEff
     hists[extEffName+'_efficiencyMC_stat'] = hist_mcEff_stat
     hists[extEffName+'_efficiencyMC_syst'] = hist_mcEff_syst
+    for iKey in histList_syst.keys():
+        hists[effName+'_'+iKey] = histList_syst[iKey]
+    for iKey in histList_dataEff_syst.keys():
+        hists[effName+'_efficiencyData_'+iKey] = histList_dataEff_syst[iKey]
+    for iKey in histList_mcEff_syst.keys():
+        hists[effName+'_efficiencyMC_'+iKey] = histList_mcEff_syst[iKey]
 
     # save the efficiency
     plotDir = os.path.join(baseDir, 'plots',
@@ -239,6 +314,8 @@ def prepare(baseDir, particle, probe, resonance, era,
             canvas.SetRightMargin(0.24)
             hists[h].Draw('colz text')
             plotPath = os.path.join(plotDir, h)
+            canvas.Modified()
+            canvas.Update()
             canvas.Print('{}.png'.format(plotPath))
             canvas.Print('{}.pdf'.format(plotPath))
 
