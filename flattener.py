@@ -10,10 +10,10 @@ from uproot_methods.classes import TH1
 
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
-from pyspark.sql import types as types
 
 from registry import registry
-from muon_definitions import (get_weighted_dataframe,
+from muon_definitions import (get_miniIso_dataframe,
+                              get_weighted_dataframe,
                               get_binned_dataframe,
                               get_extended_eff_name,
                               get_full_name)
@@ -67,37 +67,41 @@ def run_conversion(spark, particle, probe, resonance, era, subEra,
         baseDF = spark.read.format("root")\
                       .option('tree', treename)\
                       .load(fnames)
+    # create the miniIsoaltion columns
+    MiniIsoDF = get_miniIso_dataframe(baseDF)
 
     # create the definitions columns
     definitions = config.definitions()
-    defDF = baseDF
+    defDF = MiniIsoDF
+    #baseDF
     # START -- add columns with miniIsolation information
-    MiniIsoAEff_udf = F.udf(lambda abseta:
-                            0.0735 if abseta <= 0.8
-                            else (0.0619 if abseta <= 1.3
-                                  else (0.0465 if abseta <= 2.0
-                                        else (0.0433 if abseta <= 2.2
-                                              else 0.0577))),
-                            types.FloatType())
-    MiniIsoRiso2_udf = F.udf(lambda pt:
-                             max(0.05, min(0.2, 10.0/pt)),
-                             types.FloatType())
-    MiniIsolation_udf = F.udf(lambda charged, photon, neutral, corr, pt:
-                              (charged+max(0.0, photon+neutral-corr))/pt,
-                              types.FloatType())
-    defDF = defDF.withColumn('MiniIsoAEff', MiniIsoAEff_udf(defDF.abseta))
-    defDF = defDF.withColumn('MiniIso_riso2', MiniIsoRiso2_udf(defDF.pt))
-    defDF = defDF.withColumn('MiniIso_CorrectedTerm',
-                             (F.col('fixedGridRhoFastjetCentralNeutral') *
-                              F.col('MiniIsoAEff') *
-                              F.col('MiniIso_riso2')/0.09))
-    defDF = defDF.withColumn('MiniIsolation',
-                             MiniIsolation_udf(defDF.miniIsoCharged,
-                                               defDF.miniIsoPhotons,
-                                               defDF.miniIsoNeutrals,
-                                               defDF.MiniIso_CorrectedTerm,
-                                               defDF.pt))
+    #MiniIsoAEff_udf = F.udf(lambda abseta:
+    #                        0.0735 if abseta <= 0.8
+    #                        else (0.0619 if abseta <= 1.3
+    #                              else (0.0465 if abseta <= 2.0
+    #                                    else (0.0433 if abseta <= 2.2
+    #                                          else 0.0577))),
+    #                        T.FloatType())
+    #MiniIsoRiso2_udf = F.udf(lambda pt:
+    #                         max(0.05, min(0.2, 10.0/pt)),
+    #                         T.FloatType())
+    #MiniIsolation_udf = F.udf(lambda charged, photon, neutral, corr, pt:
+    #                          (charged+max(0.0, photon+neutral-corr))/pt,
+    #                          T.FloatType())
+    #defDF = defDF.withColumn('MiniIsoAEff', MiniIsoAEff_udf(defDF.abseta))
+    #defDF = defDF.withColumn('MiniIso_riso2', MiniIsoRiso2_udf(defDF.pt))
+    #defDF = defDF.withColumn('MiniIso_CorrectedTerm',
+    #                         (F.col('fixedGridRhoFastjetCentralNeutral') *
+    #                          F.col('MiniIsoAEff') *
+    #                          F.col('MiniIso_riso2')/0.09))
+    #defDF = defDF.withColumn('MiniIsolation',
+    #                         MiniIsolation_udf(defDF.miniIsoCharged,
+    #                                           defDF.miniIsoPhotons,
+    #                                           defDF.miniIsoNeutrals,
+    #                                           defDF.MiniIso_CorrectedTerm,
+    #                                           defDF.pt))
     # END -- add columns with miniIsolation information
+
     for d in definitions:
         defDF = defDF.withColumn(d, F.expr(definitions[d]))
 

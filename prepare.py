@@ -119,15 +119,15 @@ def prepare(baseDir, particle, probe, resonance, era,
     systList = {
         'SF': {
             'fitTypes': ['AltBkg', 'AltSig'],
-            'shiftTypes': ['tagIso', 'massBin']
+            'shiftTypes': ['tagIso', 'massBin', 'massRange']
         },
         'dataEff': {
             'fitTypes': ['AltBkg', 'AltSig'],
-            'shiftTypes': []
+            'shiftTypes': ['tagIso', 'massBin', 'massRange']
         },
         'mcEff': {
             'fitTypes': [],
-            'shiftTypes': ['tagIso', 'massBin']
+            'shiftTypes': ['tagIso', 'massBin', 'massRange']
         }
     }
 
@@ -314,17 +314,6 @@ def prepare(baseDir, particle, probe, resonance, era,
             canvas.SetRightMargin(0.24)
             hists[h].Draw('colz text')
             plotPath = os.path.join(plotDir, h)
-            canvas.SetLogy()
-            # START -- format for easier comparison
-            if h == extEffName:
-                hists[h].SetMaximum(1.015)
-                hists[h].SetMinimum(0.985)
-            if "efficiency" in h:
-                hists[h].SetMaximum(1.0)
-                hists[h].SetMinimum(0.85)
-            if "syst" or "stat" in h:
-                hists[h].Draw('colz text e')
-            # END -- format for easier comparison
             canvas.Modified()
             canvas.Update()
             canvas.Print('{}.png'.format(plotPath))

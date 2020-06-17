@@ -2,6 +2,7 @@ import os
 import uproot
 import itertools
 from pyspark.sql import functions as F
+from pyspark.sql import types as T
 from pyspark.ml.feature import Bucketizer
 
 
@@ -146,6 +147,40 @@ def get_tag_dataframe(df, resonance, era, subEra, shift=None):
             tag_sel = tag_sel + ' and tag_combRelIsoPF04dBeta<0.2'
 
     return df.filter(tag_sel)
+
+
+def get_miniIso_dataframe(df):
+    '''
+    Produces a dataframe with a MiniIsoAEff, MiniIso_riso2,
+    MiniIso_CorrectedTerm and MiniIsolation column.
+    '''
+    MiniIsoAEff_udf = F.udf(lambda abseta:
+                            0.0735 if abseta <= 0.8
+                            else (0.0619 if abseta <= 1.3
+                                  else (0.0465 if abseta <= 2.0
+                                        else (0.0433 if abseta <= 2.2
+                                              else 0.0577))),
+                            T.FloatType())
+    MiniIsoRiso2_udf = F.udf(lambda pt:
+                             max(0.05, min(0.2, 10.0/pt)),
+                             T.FloatType())
+    MiniIsolation_udf = F.udf(lambda charged, photon, neutral, corr, pt:
+                              (charged+max(0.0, photon+neutral-corr))/pt,
+                              T.FloatType())
+    MiniIsoDF = df.withColumn('MiniIsoAEff', MiniIsoAEff_udf(df.abseta))
+    MiniIsoDF = MiniIsoDF.withColumn('MiniIso_riso2',
+                                     MiniIsoRiso2_udf(MiniIsoDF.pt))
+    MiniIsoDF = MiniIsoDF.withColumn(
+        'MiniIso_CorrectedTerm',
+        (F.col('fixedGridRhoFastjetCentralNeutral') *
+        F.col('MiniIsoAEff') * F.col('MiniIso_riso2')/0.09))
+    MiniIsoDF = MiniIsoDF.withColumn(
+        'MiniIsolation',MiniIsolation_udf(MiniIsoDF.miniIsoCharged,
+                                          MiniIsoDF.miniIsoPhotons,
+                                          MiniIsoDF.miniIsoNeutrals,
+                                          MiniIsoDF.MiniIso_CorrectedTerm,
+                                          MiniIsoDF.pt))
+    return MiniIsoDF
 
 
 def get_weighted_dataframe(df, doGen, resonance, era, subEra, shift=None):

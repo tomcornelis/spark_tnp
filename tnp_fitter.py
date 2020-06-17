@@ -259,7 +259,7 @@ def main(argv=None):
     if args.dryrun:
         print('Will run {} {} jobs'.format(len(jobs), args.command))
     elif args.condor:
-        test = True
+        test = False
         submit_dir = ''
         joblist = os.path.join(
             submit_dir,
