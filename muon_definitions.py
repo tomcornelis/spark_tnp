@@ -173,13 +173,13 @@ def get_miniIso_dataframe(df):
     MiniIsoDF = MiniIsoDF.withColumn(
         'MiniIso_CorrectedTerm',
         (F.col('fixedGridRhoFastjetCentralNeutral') *
-        F.col('MiniIsoAEff') * F.col('MiniIso_riso2')/0.09))
+         F.col('MiniIsoAEff') * F.col('MiniIso_riso2')/0.09))
     MiniIsoDF = MiniIsoDF.withColumn(
-        'MiniIsolation',MiniIsolation_udf(MiniIsoDF.miniIsoCharged,
-                                          MiniIsoDF.miniIsoPhotons,
-                                          MiniIsoDF.miniIsoNeutrals,
-                                          MiniIsoDF.MiniIso_CorrectedTerm,
-                                          MiniIsoDF.pt))
+        'MiniIsolation', MiniIsolation_udf(MiniIsoDF.miniIsoCharged,
+                                           MiniIsoDF.miniIsoPhotons,
+                                           MiniIsoDF.miniIsoNeutrals,
+                                           MiniIsoDF.MiniIso_CorrectedTerm,
+                                           MiniIsoDF.pt))
     return MiniIsoDF
 
 
