@@ -1,7 +1,7 @@
 {
     "efficiencies": [
-        ["TightIDandMiniIso", "TightID"],
-        ["LooseIDandMiniIso", "LooseID"]
+        ["MiniIsolationTight", "TightID"],
+        ["MiniIsolationLoose", "LooseID"]
     ],
     "selection": "tag_pt>29 and tag_abseta<2.4 and tag_IsoMu27==1 and pair_probeMultiplicity==1 and tag_combRelIsoPF04dBeta<0.2",
     "definitions": {
