@@ -37,9 +37,6 @@ def run_conversion(spark, particle, probe, resonance, era, subEra,
         fnames = registry.root(particle, probe, resonance, era, subEra)
         fnames = ['root://eoscms.cern.ch/'+f for f in fnames]
 
-    # for when we use root files instead of parquet
-    treename = registry.treename(particle, probe, resonance, era, subEra)
-
     jobPath = os.path.join(particle, probe, resonance, era, subEra)
     if shift:
         jobPath = os.path.join(jobPath, shift)
@@ -64,6 +61,7 @@ def run_conversion(spark, particle, probe, resonance, era, subEra,
         else:
             baseDF = spark.read.parquet(fnames)
     else:
+        treename = registry.treename(particle, probe, resonance, era, subEra)
         baseDF = spark.read.format("root")\
                       .option('tree', treename)\
                       .load(fnames)
@@ -214,6 +212,8 @@ def run_conversion(spark, particle, probe, resonance, era, subEra,
 subEras = {
     'Z': {
         # ultra legacy
+        'Run2016_UL_HIPM': ['Run2016', 'DY_madgraph'],
+        'Run2016_UL': ['Run2016', 'DY_madgraph'],
         'Run2017_UL': ['Run2017', 'DY_madgraph'],
         'Run2018_UL': ['Run2018', 'DY_madgraph', 'DY_powheg'],
         # ReReco

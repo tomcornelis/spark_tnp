@@ -20,6 +20,8 @@ def get_allowed_eras(resonance):
     eras = {
         'Z': [
             # ultra legacy
+            'Run2016_UL_HIPM',
+            'Run2016_UL',
             'Run2017_UL',
             'Run2018_UL',
             # rereco
@@ -39,6 +41,10 @@ def get_allowed_sub_eras(resonance, era):
     subEras = {
         'Z': {
             # ultra legacy
+            'Run2016_UL_HIPM': ['Run2016'] + [
+                f'Run2016{b}' for b in 'BCDEF']+['DY_madgraph'],
+            'Run2016_UL': ['Run2016'] + [
+                f'Run2016{b}' for b in 'FGH']+['DY_madgraph'],
             'Run2017_UL': ['Run2017'] + [
                 f'Run2017{b}' for b in 'BCDEF']+['DY_madgraph'],
             'Run2018_UL': ['Run2018'] + [
@@ -66,6 +72,8 @@ def get_data_mc_sub_eras(resonance, era):
     eraMap = {
         'Z': {
             # ultra legacy
+            'Run2016_UL_HIPM': ['Run2016', 'DY_madgraph'],
+            'Run2016_UL': ['Run2016', 'DY_madgraph'],
             'Run2017_UL': ['Run2017', 'DY_madgraph'],
             # TODO: decide how to handle alternate generators
             'Run2018_UL': ['Run2018', 'DY_madgraph'],
@@ -92,6 +100,8 @@ def get_pileup(resonance, era, subEra):
     # get the pileup
     dataPileup = {
         # Note: for now use ReReco version of pileup
+        # TODO: need to redo splitting by 2016 B-F/F-H
+        'Run2016_UL_HIPM': 'pileup/data/Run2016.root',
         'Run2016_UL': 'pileup/data/Run2016.root',
         'Run2017_UL': 'pileup/data/Run2017.root',
         'Run2018_UL': 'pileup/data/Run2018.root',
@@ -100,6 +110,9 @@ def get_pileup(resonance, era, subEra):
         'Run2018': 'pileup/data/Run2018.root',
     }
     mcPileup = {
+        # TODO: do the two eras have different profiles?
+        'Run2016_UL_HIPM': 'pileup/mc/Run2016_UL.root',
+        'Run2016_UL': 'pileup/mc/Run2016_UL.root',
         'Run2017_UL': 'pileup/mc/Run2017_UL.root',
         'Run2018_UL': 'pileup/mc/Run2018_UL.root',
         'Run2016': 'pileup/mc/Run2016.root',
