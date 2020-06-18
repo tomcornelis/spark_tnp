@@ -93,7 +93,7 @@ def getSyst(binName, datafname, dataEff, mcEff, fitTypes, shiftTypes):
     for isyst in fitTypes:
         systfname = datafname.replace('Nominal', isyst)
         tmpEff, tmpErr = getDataEff(binName, systfname)
-        syst.update({isyst: math.fabs(tmpEff - dataEff)})
+        syst.update({isyst: abs(tmpEff - dataEff)})
         syst_sq += (tmpEff - dataEff)**2
 
     for isyst in shiftTypes:
@@ -101,8 +101,10 @@ def getSyst(binName, datafname, dataEff, mcEff, fitTypes, shiftTypes):
         systDnfname = datafname.replace('Nominal', isyst+'Down')
         tmpEffUp, tmpErr = getEff(binName, systUpfname)
         tmpEffDn, tmpErr = getEff(binName, systDnfname)
-        syst.update({isyst: (math.fabs(tmpEffUp-tmpEffDn)/2)})
-        syst_sq += ((tmpEffUp-tmpEffDn)/2)**2
+        upDiff = abs(tmpEffUp - dataEff)
+        dnDiff = abs(tmpEffDn - dataEff)
+        syst.update({isyst: (upDiff + dnDiff)/2})
+        syst_sq += ((upDiff + dnDiff)/2)**2
 
     syst.update({'combined': (syst_sq)**0.5})
     return syst
@@ -116,6 +118,8 @@ def prepare(baseDir, particle, probe, resonance, era,
     extEffName = get_extended_eff_name(num, denom, variableLabels)
     binning = config.binning()
     dataSubEra, mcSubEra = get_data_mc_sub_eras(resonance, era)
+
+    # TODO: move to configuration file
     systList = {
         'SF': {
             'fitTypes': ['AltBkg', 'AltSig'],
@@ -209,6 +213,16 @@ def prepare(baseDir, particle, probe, resonance, era,
             ) for i, ind in enumerate(index)
         ]
         _out = output[effName][varName]
+
+        # add binning definitions
+        _out['binning'] = [
+            {
+                'variable': vl,
+                'binning': binning[vl].tolist(),
+            }
+            for vl in variableLabels
+        ]
+
         for subVarKey in subVarKeys:
             if subVarKey not in _out:
                 _out[subVarKey] = {}
@@ -241,6 +255,9 @@ def prepare(baseDir, particle, probe, resonance, era,
         _out['value'] = sf
         _out['stat'] = sf_stat
         _out['syst'] = sf_syst['combined']
+        for s in itertools.chain(systList['SF']['fitTypes'],
+                                 systList['SF']['shiftTypes']):
+            _out[s] = sf_syst[s]
 
         def set_bin(hist, index, val, err):
             index = list(index)
