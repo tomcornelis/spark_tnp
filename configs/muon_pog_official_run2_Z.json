@@ -22,7 +22,7 @@
     ],
     "selection": "tag_pt>26 and tag_abseta<2.4 and tag_IsoMu24==1 and pair_probeMultiplicity==1 and tag_combRelIsoPF04dBeta<0.2",
     "definitions": {
-        "genTracks": "True",
+        "genTracks": "((pt<20 and tag_mt<50 and mt<30) or (pt>20))",
         "TrackerMuons": "TM == 1",
         "GlobalMuons": "Glb == 1",
         "LooseID": "CutBasedIdLoose == 1",
@@ -78,5 +78,19 @@
         "massBinDown": {"shiftType": "massBinDown"},
         "massRangeUp": {"shiftType": "massRangeUp"},
         "massRangeDown": {"shiftType": "massRangeDown"}
+    },
+    "systematics" : {
+        "SF": {
+            "fitTypes": ["AltSig"],
+            "shiftTypes": ["tagIso", "massBin", "massRange"]
+        },
+        "dataEff": {
+            "fitTypes": ["AltSig"],
+            "shiftTypes": ["tagIso", "massBin", "massRange"]
+        },
+        "mcEff": {
+            "fitTypes": [],
+            "shiftTypes": ["tagIso", "massRange"]
+        }
     }
 }

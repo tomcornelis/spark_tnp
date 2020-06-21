@@ -79,9 +79,27 @@ Configuration files have the structure (note: comments are not valid JSON):
         "AltSig": {"fitType": "AltSig"},
         // Changing the shift type (alternative fit inputs/configurations)
         "massBinUp": {"shiftType": "massBinUp"},
+        "massBinDown": {"shiftType": "massBinDown"},
         // Changing the input flat histograms
         "tagIsoUp": {"inType": "TagIsoUp"}
+        "tagIsoDown": {"inType": "TagIsoDown"}
         // or combinations of the above
+    },
+    // An optional set of systematics to include in the uncertainies
+    // "Up" and "Down" (from above) should not be included
+    "systematics" : {
+        "SF": {
+            "fitTypes": ["AltSig"],
+            "shiftTypes": ["tagIso", "massBin"]
+        },
+        "dataEff": {
+            "fitTypes": ["AltSig"],
+            "shiftTypes": ["tagIso", "massBin"]
+        },
+        "mcEff": {
+            "fitTypes": [],
+            "shiftTypes": ["tagIso"]
+        }
     }
 }
 ```

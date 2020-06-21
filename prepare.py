@@ -119,21 +119,10 @@ def prepare(baseDir, particle, probe, resonance, era,
     binning = config.binning()
     dataSubEra, mcSubEra = get_data_mc_sub_eras(resonance, era)
 
-    # TODO: move to configuration file
-    systList = {
-        'SF': {
-            'fitTypes': ['AltBkg', 'AltSig'],
-            'shiftTypes': ['tagIso', 'massBin', 'massRange']
-        },
-        'dataEff': {
-            'fitTypes': ['AltBkg', 'AltSig'],
-            'shiftTypes': ['tagIso', 'massBin', 'massRange']
-        },
-        'mcEff': {
-            'fitTypes': [],
-            'shiftTypes': ['tagIso', 'massBin', 'massRange']
-        }
-    }
+    systList = config.get('systematics',
+                          {x: {'fitTypes': [],
+                               'shittTypes': []}
+                           for x in ['SF', 'dataEff', 'mcEff']})
 
     def get_variable_name_pretty(variableLabel):
         variables = config.variables()

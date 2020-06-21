@@ -1,14 +1,37 @@
 {
     "efficiencies": [
-        ["MiniIsolationTight", "TightID"],
-        ["MiniIsolationLoose", "LooseID"]
+        ["TrackerMuons", "genTracks"],
+        ["GlobalMuons", "genTracks"],
+        ["LooseID", "genTracks"],
+        ["MediumID", "genTracks"],
+        ["MediumPromptID", "genTracks"],
+        ["TightID", "genTracks"],
+        ["LooseID", "TrackerMuons"],
+        ["MediumID", "TrackerMuons"],
+        ["MediumPromptID", "TrackerMuons"],
+        ["TightID", "TrackerMuons"],
+        ["LooseRelIso", "LooseID"],
+        ["LooseRelIso", "MediumID"],
+        ["LooseRelIso", "MediumPromptID"],
+        ["LooseRelIso", "TightIDandIPCut"],
+        ["TightRelIso", "MediumID"],
+        ["TightRelIso", "MediumPromptID"],
+        ["TightRelIso", "TightIDandIPCut"]
     ],
-    "selection": "tag_pt>29 and tag_abseta<2.4 and tag_IsoMu27==1 and pair_probeMultiplicity==1 and tag_combRelIsoPF04dBeta<0.2",
+    "selection": "tag_pt>26 and tag_abseta<2.4 and tag_IsoMu24==1 and pair_probeMultiplicity==1 and tag_combRelIsoPF04dBeta<0.2",
     "definitions": {
-        "LooseID": "CutBasedIdLoose == 1",
-        "TightID": "CutBasedIdTight == 1",
-        "MiniIsolationLoose" : "MiniIsolation < 0.4",
-        "MiniIsolationTight" : "MiniIsolation < 0.1",
+        "genTracks": "((pt<20 and tag_mt<50 and mt<30) or (pt>20))",
+        "TrackerMuons": "TM == 1",
+        "GlobalMuons": "Glb == 1",
+        "LooseID": "Loose == 1",
+        "MediumID": "Medium == 1",
+        "MediumPromptID": "Medium2016 == 1",
+        "TightID": "Tight2012 == 1",
+        "TightIDandIPCut": "Tight2012 == 1",
+        "HighPtID": "HighPt == 1",
+        "HighPtIDandIPCut": "HighPt == 1",
+        "LooseRelIso": "combRelIsoPF04dBeta < 0.25",
+        "TightRelIso": "combRelIsoPF04dBeta < 0.15"
     },
     "binning": {
         "pt": [15, 20, 25, 30, 40, 50, 60, 120],
@@ -35,10 +58,10 @@
     ],
     "shifts": {
         "TagIsoUp": {
-            "selection": "tag_pt>29 and tag_abseta<2.4 and tag_IsoMu27==1 and pair_probeMultiplicity==1 and tag_combRelIsoPF04dBeta<0.3"
+            "selection": "tag_pt>26 and tag_abseta<2.4 and tag_IsoMu24==1 and pair_probeMultiplicity==1 and tag_combRelIsoPF04dBeta<0.3"
         },
         "TagIsoDown": {
-            "selection": "tag_pt>29 and tag_abseta<2.4 and tag_IsoMu27==1 and pair_probeMultiplicity==1 and tag_combRelIsoPF04dBeta<0.1"
+            "selection": "tag_pt>26 and tag_abseta<2.4 and tag_IsoMu24==1 and pair_probeMultiplicity==1 and tag_combRelIsoPF04dBeta<0.1"
         }
     },
     "fitShifts": {
