@@ -20,7 +20,7 @@
         ["TightRelIso", "MediumPromptID"],
         ["TightRelIso", "TightIDandIPCut"]
     ],
-    "selection": "tag_pt>29 and tag_abseta<2.4 and tag_IsoMu27==1 and pair_probeMultiplicity==1 and tag_combRelIsoPF04dBeta<0.2",
+    "selection": "tag_pt>29 and tag_abseta<2.4 and tag_IsoMu27==1 and pair_probeMultiplicity==1 and tag_combRelIsoPF04dBeta<0.2 and abs(pair_dz)<0.5",
     "definitions": {
         "genTracks": "((pt<20 and tag_mt<50 and mt<30) or (pt>20))",
         "TrackerMuons": "TM == 1",

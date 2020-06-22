@@ -43,19 +43,20 @@ def getEff(binName, fname):
         return eff, err
     except Exception as e:
         print('Exception for', binName)
-        raise e
+        print(e)
+        # raise e
         return 1., 0.
 
 
 def getDataEff(binName, fname):
-    tfile = ROOT.TFile(fname, 'read')
-    fitresP = tfile.Get('{}_resP'.format(binName))
-    fitresF = tfile.Get('{}_resF'.format(binName))
-
-    fitP = fitresP.floatParsFinal().find('nSigP')
-    fitF = fitresF.floatParsFinal().find('nSigF')
-
     try:
+        tfile = ROOT.TFile(fname, 'read')
+        fitresP = tfile.Get('{}_resP'.format(binName))
+        fitresF = tfile.Get('{}_resF'.format(binName))
+
+        fitP = fitresP.floatParsFinal().find('nSigP')
+        fitF = fitresF.floatParsFinal().find('nSigF')
+
         nP = fitP.getVal()
         nF = fitF.getVal()
         eP = fitP.getError()
@@ -73,7 +74,8 @@ def getDataEff(binName, fname):
         return computeEff(nP, nF, eP, eF)
     except Exception as e:
         print('Exception for', binName)
-        raise e
+        print(e)
+        # raise e
         return 1., 0.
 
 
