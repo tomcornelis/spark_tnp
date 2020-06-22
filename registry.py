@@ -1,3 +1,4 @@
+import os
 import glob
 import pandas as pd
 import itertools
@@ -48,6 +49,7 @@ class Registry:
 
 registry = Registry()
 
+_rpath = os.path.abspath(os.path.dirname(__file__))
 _jsons = [
     # Muon POG generalTrack probes
     'data/registry_muon_Z_generalTracks.json',
@@ -57,4 +59,4 @@ _jsons = [
 ]
 
 for fname in _jsons:
-    registry.load_json(fname)
+    registry.load_json(os.path.join(_rpath, fname))
