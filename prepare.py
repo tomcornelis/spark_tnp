@@ -27,13 +27,20 @@ def computeEff(n1, n2, e1, e2):
     return eff, err
 
 
-def getEff(binName, fname):
+def getEff(binName, fname, shift=None):
     try:
         tfile = ROOT.TFile(fname, 'read')
         hP = tfile.Get('{}_GenPass'.format(binName))
         hF = tfile.Get('{}_GenFail'.format(binName))
-        bin1 = 1
-        bin2 = hP.GetXaxis().GetNbins()
+        # hard code Z for now (same as in run_single_fit.py)
+        if shift == 'massRangUp':
+            blow, bhigh = 75, 135
+        elif shift == 'massRangeDown':
+            blow, bhigh = 65, 125
+        else:
+            blow, bhigh = 70, 130
+        bin1 = hP.GetXaxis().FindBin(blow)
+        bin2 = hP.GetXaxis().FindBin(bhigh)
         eP = ctypes.c_double(-1.0)
         eF = ctypes.c_double(-1.0)
         nP = hP.IntegralAndError(bin1, bin2, eP)
@@ -48,7 +55,7 @@ def getEff(binName, fname):
         return 1., 0.
 
 
-def getDataEff(binName, fname):
+def getDataEff(binName, fname, shift=None):
     try:
         tfile = ROOT.TFile(fname, 'read')
         fitresP = tfile.Get('{}_resP'.format(binName))
@@ -64,11 +71,23 @@ def getDataEff(binName, fname):
 
         hP = tfile.Get('{}_Pass'.format(binName))
         hF = tfile.Get('{}_Fail'.format(binName))
+        # hard code Z for now (same as in run_single_fit.py)
+        if shift == 'massRangUp':
+            blow, bhigh = 75, 135
+        elif shift == 'massRangeDown':
+            blow, bhigh = 65, 125
+        else:
+            blow, bhigh = 70, 130
+        bin1 = hP.GetXaxis().FindBin(blow)
+        bin2 = hP.GetXaxis().FindBin(bhigh)
+        ePalt = ctypes.c_double(-1.0)
+        eFalt = ctypes.c_double(-1.0)
+        hP.IntegralAndError(bin1, bin2, ePalt)
+        hF.IntegralAndError(bin1, bin2, eFalt)
 
-        if eP > math.sqrt(hP.Integral()):
-            eP = math.sqrt(hP.Integral())
-        if eF > math.sqrt(hF.Integral()):
-            eF = math.sqrt(hF.Integral())
+        eP = min(eP, ePalt.value)
+        eF = min(eF, eFalt.value)
+
         tfile.Close()
 
         return computeEff(nP, nF, eP, eF)
@@ -79,9 +98,9 @@ def getDataEff(binName, fname):
         return 1., 0.
 
 
-def getSF(binName, fname):
-    mcEff, mcErr = getEff(binName, fname)
-    dataEff, dataErr = getDataEff(binName, fname)
+def getSF(binName, fname, shift=None):
+    mcEff, mcErr = getEff(binName, fname, shift)
+    dataEff, dataErr = getDataEff(binName, fname, shift)
     sf = dataEff / mcEff if mcEff else 0.0
     sf_err = 0.0
     if dataEff and mcEff:
@@ -96,7 +115,7 @@ def getSyst(binName, fname, fitTypes, shiftTypes):
     for isyst in fitTypes:
         systfname = fname.replace('Nominal', isyst)
         # sf, sf_err, dataEff, dataErr, mcEff, mcErr
-        tmp = getSF(binName, systfname)
+        tmp = getSF(binName, systfname, isyst)
         syst[isyst] = {
             'sf': tmp[0],
             'err': abs(tmp[0]-sf),
@@ -110,8 +129,8 @@ def getSyst(binName, fname, fitTypes, shiftTypes):
         systUpfname = fname.replace('Nominal', isyst+'Up')
         systDnfname = fname.replace('Nominal', isyst+'Down')
         # sf, sf_err, dataEff, dataErr, mcEff, mcErr
-        tmpUp = getSF(binName, systUpfname)
-        tmpDn = getSF(binName, systDnfname)
+        tmpUp = getSF(binName, systUpfname, isyst+'Up')
+        tmpDn = getSF(binName, systDnfname, isyst+'Down')
         tmp = [
             (tmpUp[0]+tmpDn[0])/2,
             (abs(tmpUp[0]-sf)+abs(tmpDn[0]-sf))/2,
