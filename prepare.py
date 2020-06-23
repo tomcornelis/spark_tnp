@@ -167,7 +167,7 @@ def prepare(baseDir, particle, probe, resonance, era,
         hist.GetZaxis().SetTitle('Scalefactor')
     hist_stat = hist.Clone(extEffName+'_stat')
     hist_syst = hist.Clone(extEffName+'_syst')
-    histList_syst = {'combined': hist.Clone(effName+'_combinedSyst')}
+    histList_syst = {'combined': hist.Clone(extEffName+'_combinedSyst')}
 
     hist_dataEff = hist.Clone(extEffName+'_efficiencyData')
     if nVars == 1:
@@ -177,27 +177,28 @@ def prepare(baseDir, particle, probe, resonance, era,
     hist_dataEff_stat = hist_dataEff.Clone(extEffName+'_efficiencyData_stat')
     hist_dataEff_syst = hist_dataEff.Clone(extEffName+'_efficiencyData_syst')
     histList_dataEff_syst = {
-        'combined': hist_dataEff.Clone(effName+'_efficiencyData_combinedSyst')
+        'combined': hist_dataEff.Clone(
+            extEffName+'_efficiencyData_combinedSyst')
     }
     hist_mcEff = hist_dataEff.Clone(extEffName+'_efficiencyMC')
     hist_mcEff_stat = hist_dataEff.Clone(extEffName+'_efficiencyMC_stat')
     hist_mcEff_syst = hist_dataEff.Clone(extEffName+'_efficiencyMC_syst')
     histList_mcEff_syst = {
-        'combined': hist_dataEff.Clone(effName+'_efficiencyMC_combinedSyst')
+        'combined': hist_dataEff.Clone(extEffName+'_efficiencyMC_combinedSyst')
     }
 
     # the individual systematics
     for iSyst in itertools.chain(systList['SF']['fitTypes'],
                                  systList['SF']['shiftTypes']):
-        histList_syst[iSyst] = hist.Clone(effName+'_'+iSyst)
+        histList_syst[iSyst] = hist.Clone(extEffName+'_'+iSyst)
         histList_syst[iSyst].GetZaxis().SetTitle('Uncertainty')
     for iSyst in itertools.chain(systList['dataEff']['fitTypes'],
                                  systList['dataEff']['shiftTypes']):
-        histList_dataEff_syst[iSyst] = hist_dataEff.Clone(effName+'_'+iSyst)
+        histList_dataEff_syst[iSyst] = hist_dataEff.Clone(extEffName+'_'+iSyst)
         histList_dataEff_syst[iSyst].GetZaxis().SetTitle('Uncertainty')
     for iSyst in itertools.chain(systList['mcEff']['fitTypes'],
                                  systList['mcEff']['shiftTypes']):
-        histList_mcEff_syst[iSyst] = hist_mcEff.Clone(effName+'_'+iSyst)
+        histList_mcEff_syst[iSyst] = hist_mcEff.Clone(extEffName+'_'+iSyst)
         histList_mcEff_syst[iSyst].GetZaxis().SetTitle('Uncertainty')
 
     varName = get_variables_name(variableLabels)
@@ -307,12 +308,12 @@ def prepare(baseDir, particle, probe, resonance, era,
     hists[extEffName+'_efficiencyMC_stat'] = hist_mcEff_stat
     hists[extEffName+'_efficiencyMC_syst'] = hist_mcEff_syst
     for iKey in histList_syst.keys():
-        hists[effName+'_'+iKey+'_syst'] = histList_syst[iKey]
+        hists[extEffName+'_'+iKey+'_syst'] = histList_syst[iKey]
     for iKey in histList_dataEff_syst.keys():
-        hname = effName+'_efficiencyData_'+iKey+'_syst'
+        hname = extEffName+'_efficiencyData_'+iKey+'_syst'
         hists[hname] = histList_dataEff_syst[iKey]
     for iKey in histList_mcEff_syst.keys():
-        hname = effName+'_efficiencyMC_'+iKey+'_syst'
+        hname = extEffName+'_efficiencyMC_'+iKey+'_syst'
         hists[hname] = histList_mcEff_syst[iKey]
 
     # save the efficiency
