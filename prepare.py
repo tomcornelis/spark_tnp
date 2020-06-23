@@ -89,35 +89,60 @@ def getSF(binName, fname):
     return sf, sf_err, dataEff, dataErr, mcEff, mcErr
 
 
-def getSyst(binName, datafname, dataEff, mcEff, fitTypes, shiftTypes):
+def getSyst(binName, fname, fitTypes, shiftTypes):
     syst = {}
-    syst_sq = 0
     for isyst in fitTypes:
-        systfname = datafname.replace('Nominal', isyst)
-        tmpEff, tmpErr = getDataEff(binName, systfname)
-        syst.update({
-            isyst: {'eff': tmpEff,
-                    'err': tmpErr}
-        })
-        syst_sq += (tmpEff - dataEff)**2
+        systfname = fname.replace('Nominal', isyst)
+        # sf, sf_err, dataEff, dataErr, mcEff, mcErr
+        tmp = getSF(binName, systfname)
+        syst[isyst] = {
+            'sf': tmp[0],
+            'err': tmp[1],
+            'dataEff': tmp[2],
+            'dataErr': tmp[3],
+            'mcEff': tmp[4],
+            'mcErr': tmp[5],
+        }
 
     for isyst in shiftTypes:
-        systUpfname = datafname.replace('Nominal', isyst+'Up')
-        systDnfname = datafname.replace('Nominal', isyst+'Down')
-        tmpEffUp, tmpErrUp = getDataEff(binName, systUpfname)
-        tmpEffDn, tmpErrDn = getDataEff(binName, systDnfname)
-        upDiff = abs(tmpEffUp - dataEff)
-        dnDiff = abs(tmpEffDn - dataEff)
-        syst.update({
-            isyst: {'err': (upDiff + dnDiff)/2},
-            isyst+'Up': {'eff': tmpEffUp,
-                         'err': tmpErrUp},
-            isyst+'Down': {'eff': tmpEffDn,
-                           'err': tmpErrDn},
-        })
-        syst_sq += ((upDiff + dnDiff)/2)**2
+        systUpfname = fname.replace('Nominal', isyst+'Up')
+        systDnfname = fname.replace('Nominal', isyst+'Down')
+        # sf, sf_err, dataEff, dataErr, mcEff, mcErr
+        tmpUp = getSF(binName, systUpfname)
+        tmpDn = getSF(binName, systDnfname)
+        tmp = [
+            (tmpUp[0]+tmpDn[0])/2,
+            (abs(tmpUp[1]-tmpUp[0])+abs(tmpDn[1]-tmpDn[0]))/2,
+            (tmpUp[2]+tmpDn[2])/2,
+            (abs(tmpUp[3]-tmpUp[2])+abs(tmpDn[3]-tmpDn[2]))/2,
+            (tmpUp[4]+tmpDn[4])/2,
+            (abs(tmpUp[5]-tmpUp[4])+abs(tmpDn[5]-tmpDn[4]))/2,
+        ]
+        syst[isyst] = {
+            'sf': tmp[0],
+            'err': tmp[1],
+            'dataEff': tmp[2],
+            'dataErr': tmp[3],
+            'mcEff': tmp[4],
+            'mcErr': tmp[5],
+        }
+        syst[isyst+'Up'] = {
+            'sf': tmpUp[0],
+            'err': tmpUp[1],
+            'dataEff': tmpUp[2],
+            'dataErr': tmpUp[3],
+            'mcEff': tmpUp[4],
+            'mcErr': tmpUp[5],
+        }
+        syst[isyst+'Down'] = {
+            'sf': tmpDn[0],
+            'err': tmpDn[1],
+            'dataEff': tmpDn[2],
+            'dataErr': tmpDn[3],
+            'mcEff': tmpDn[4],
+            'mcErr': tmpDn[5],
+        }
 
-    syst.update({'combined': {'err': (syst_sq)**0.5}})
     return syst
 
 
@@ -167,7 +192,10 @@ def prepare(baseDir, particle, probe, resonance, era,
         hist.GetZaxis().SetTitle('Scalefactor')
     hist_stat = hist.Clone(extEffName+'_stat')
     hist_syst = hist.Clone(extEffName+'_syst')
-    histList_syst = {'combined': hist.Clone(extEffName+'_combinedSyst')}
+    histList_syst = {
+        'combined_syst': hist.Clone(extEffName+'_combined_syst'),
+    }
+    histList_syst['combined_syst'].GetZaxis().SetTitle('Uncertainty')
 
     hist_dataEff = hist.Clone(extEffName+'_efficiencyData')
     if nVars == 1:
@@ -177,29 +205,37 @@ def prepare(baseDir, particle, probe, resonance, era,
     hist_dataEff_stat = hist_dataEff.Clone(extEffName+'_efficiencyData_stat')
     hist_dataEff_syst = hist_dataEff.Clone(extEffName+'_efficiencyData_syst')
     histList_dataEff_syst = {
-        'combined': hist_dataEff.Clone(
-            extEffName+'_efficiencyData_combinedSyst')
+        'combined_syst': hist_dataEff.Clone(
+            extEffName+'_efficiencyData_combined_syst'),
     }
+    histList_dataEff_syst['combined_syst'].GetZaxis().SetTitle('Uncertainty')
     hist_mcEff = hist_dataEff.Clone(extEffName+'_efficiencyMC')
     hist_mcEff_stat = hist_dataEff.Clone(extEffName+'_efficiencyMC_stat')
     hist_mcEff_syst = hist_dataEff.Clone(extEffName+'_efficiencyMC_syst')
     histList_mcEff_syst = {
-        'combined': hist_dataEff.Clone(extEffName+'_efficiencyMC_combinedSyst')
+        'combined_syst': hist_dataEff.Clone(
+            extEffName+'_efficiencyMC_combined_syst'),
     }
+    histList_mcEff_syst['combined_syst'].GetZaxis().SetTitle('Uncertainty')
 
     # the individual systematics
     for iSyst in itertools.chain(systList['SF']['fitTypes'],
                                  systList['SF']['shiftTypes']):
         histList_syst[iSyst] = hist.Clone(extEffName+'_'+iSyst)
-        histList_syst[iSyst].GetZaxis().SetTitle('Uncertainty')
+        histList_syst[iSyst+'_syst'] = hist.Clone(extEffName+'_'+iSyst+'_syst')
+        histList_syst[iSyst+'_syst'].GetZaxis().SetTitle('Uncertainty')
     for iSyst in itertools.chain(systList['dataEff']['fitTypes'],
                                  systList['dataEff']['shiftTypes']):
         histList_dataEff_syst[iSyst] = hist_dataEff.Clone(extEffName+'_'+iSyst)
-        histList_dataEff_syst[iSyst].GetZaxis().SetTitle('Uncertainty')
+        histList_dataEff_syst[iSyst+'_syst'] = hist_dataEff.Clone(
+            extEffName+'_'+iSyst+'_syst')
+        histList_dataEff_syst[iSyst+'_syst'].GetZaxis().SetTitle('Uncertainty')
     for iSyst in itertools.chain(systList['mcEff']['fitTypes'],
                                  systList['mcEff']['shiftTypes']):
         histList_mcEff_syst[iSyst] = hist_mcEff.Clone(extEffName+'_'+iSyst)
-        histList_mcEff_syst[iSyst].GetZaxis().SetTitle('Uncertainty')
+        histList_mcEff_syst[iSyst+'_syst'] = hist_mcEff.Clone(
+            extEffName+'_'+iSyst+'_syst')
+        histList_mcEff_syst[iSyst+'_syst'].GetZaxis().SetTitle('Uncertainty')
 
     varName = get_variables_name(variableLabels)
 
@@ -243,27 +279,37 @@ def prepare(baseDir, particle, probe, resonance, era,
                                     binName + '.root')
         sf, sf_stat, dataEff, dataStat, mcEff, mcStat = getSF(
             binName, dataFNameFit)
+        fitTypes = set(systList['SF']['fitTypes']
+                       + systList['dataEff']['fitTypes']
+                       + systList['mcEff']['fitTypes'])
+        shiftTypes = set(systList['SF']['shiftTypes']
+                         + systList['dataEff']['shiftTypes']
+                         + systList['mcEff']['shiftTypes'])
         sf_syst = getSyst(binName, dataFNameFit,
-                          dataEff, mcEff,
-                          systList['SF']['fitTypes'],
-                          systList['SF']['shiftTypes'])
-        dataSyst = getSyst(binName, dataFNameFit,
-                           dataEff, mcEff,
-                           systList['dataEff']['fitTypes'],
-                           systList['dataEff']['shiftTypes'])
-        mcSyst = getSyst(binName, dataFNameFit,
-                         dataEff, mcEff,
-                         systList['mcEff']['fitTypes'],
-                         systList['mcEff']['shiftTypes'])
-        sf_err = (sf_stat**2 + sf_syst['combined']['err']**2)**0.5
-        dataErr = (dataStat**2 + dataSyst['combined']['err']**2)**0.5
-        mcErr = (mcStat**2 + mcSyst['combined']['err']**2)**0.5
+                          fitTypes, shiftTypes)
+
+        combined_syst = {}
+        for kind in ['SF', 'dataEff', 'mcEff']:
+            combined_syst[kind] = 0
+            errKey = 'err'
+            if kind == 'dataEff':
+                errKey = 'dataErr'
+            if kind == 'mcEff':
+                errKey = 'mcErr'
+            for t in itertools.chain(systList[kind]['fitTypes'],
+                                     systList[kind]['shiftTypes']):
+                combined_syst[kind] += sf_syst[t][errKey]**2
+            combined_syst[kind] = combined_syst[kind]**0.5
+
+        sf_err = (sf_stat**2 + combined_syst['SF']**2)**0.5
+        dataErr = (dataStat**2 + combined_syst['dataEff']**2)**0.5
+        mcErr = (mcStat**2 + combined_syst['mcEff']**2)**0.5
         _out['value'] = sf
         _out['stat'] = sf_stat
-        _out['syst'] = sf_syst['combined']['err']
+        _out['syst'] = combined_syst['SF']
         for s in itertools.chain(systList['SF']['fitTypes'],
                                  systList['SF']['shiftTypes']):
-            _out[s] = sf_syst[s]
+            _out[s] = sf_syst[s]['err']
 
         def set_bin(hist, index, val, err):
             index = list(index)
@@ -275,28 +321,37 @@ def prepare(baseDir, particle, probe, resonance, era,
 
         set_bin(hist, index, sf, sf_err)
         set_bin(hist_stat, index, sf, sf_stat)
-        set_bin(hist_syst, index, sf, sf_syst['combined']['err'])
-        for iKey in sf_syst.keys():
-            if iKey not in histList_syst:
-                continue
-            set_bin(histList_syst[iKey], index, sf_syst[iKey]['err'], -1)
-
+        set_bin(hist_syst, index, sf, combined_syst['SF'])
+        set_bin(histList_syst['combined_syst'], index,
+                combined_syst['SF'], -1)
         set_bin(hist_dataEff, index, dataEff, dataErr)
         set_bin(hist_dataEff_stat, index, dataEff, dataStat)
-        set_bin(hist_dataEff_syst, index, dataEff, dataSyst['combined']['err'])
-        for iKey in dataSyst.keys():
-            if iKey not in histList_dataEff_syst:
-                continue
-            set_bin(histList_dataEff_syst[iKey], index,
-                    dataSyst[iKey]['err'], -1)
-
+        set_bin(hist_dataEff_syst, index, dataEff, combined_syst['dataEff'])
+        set_bin(histList_dataEff_syst['combined_syst'], index,
+                combined_syst['dataEff'], -1)
         set_bin(hist_mcEff, index, mcEff, mcErr)
         set_bin(hist_mcEff_stat, index, mcEff, mcStat)
-        set_bin(hist_mcEff_syst, index, mcEff, mcSyst['combined']['err'])
-        for iKey in mcSyst.keys():
-            if iKey not in histList_mcEff_syst:
-                continue
-            set_bin(histList_mcEff_syst[iKey], index, mcSyst[iKey]['err'], -1)
+        set_bin(hist_mcEff_syst, index, mcEff, combined_syst['mcEff'])
+        set_bin(histList_mcEff_syst['combined_syst'], index,
+                combined_syst['mcEff'], -1)
+        for iKey in sf_syst.keys():
+            if iKey in histList_syst:
+                set_bin(histList_syst[iKey], index,
+                        sf_syst[iKey]['sf'], sf_syst[iKey]['err'])
+                set_bin(histList_syst[iKey+'_syst'], index,
+                        sf_syst[iKey]['err'], -1)
+
+            if iKey in histList_dataEff_syst:
+                set_bin(histList_dataEff_syst[iKey], index,
+                        sf_syst[iKey]['dataEff'], sf_syst[iKey]['dataErr'])
+                set_bin(histList_dataEff_syst[iKey+'_syst'], index,
+                        sf_syst[iKey]['dataErr'], -1)
+
+            if iKey in histList_mcEff_syst:
+                set_bin(histList_mcEff_syst[iKey], index,
+                        sf_syst[iKey]['mcEff'], sf_syst[iKey]['mcErr'])
+                set_bin(histList_mcEff_syst[iKey+'_syst'], index,
+                        sf_syst[iKey]['mcErr'], -1)
 
     hists[extEffName] = hist
     hists[extEffName+'_stat'] = hist_stat
@@ -308,12 +363,13 @@ def prepare(baseDir, particle, probe, resonance, era,
     hists[extEffName+'_efficiencyMC_stat'] = hist_mcEff_stat
     hists[extEffName+'_efficiencyMC_syst'] = hist_mcEff_syst
     for iKey in histList_syst.keys():
-        hists[extEffName+'_'+iKey+'_syst'] = histList_syst[iKey]
+        hname = extEffName+'_'+iKey
+        hists[hname] = histList_syst[iKey]
     for iKey in histList_dataEff_syst.keys():
-        hname = extEffName+'_efficiencyData_'+iKey+'_syst'
+        hname = extEffName+'_efficiencyData_'+iKey
         hists[hname] = histList_dataEff_syst[iKey]
     for iKey in histList_mcEff_syst.keys():
-        hname = extEffName+'_efficiencyMC_'+iKey+'_syst'
+        hname = extEffName+'_efficiencyMC_'+iKey
         hists[hname] = histList_mcEff_syst[iKey]
 
     # save the efficiency
@@ -385,6 +441,61 @@ def prepare(baseDir, particle, probe, resonance, era,
         return graph
 
     # plot the efficiencies
+    # some default colors for plots
+    colors = [ROOT.kBlack, ROOT.kBlue, ROOT.kRed, ROOT.kGreen+2,
+              ROOT.kMagenta+1, ROOT.kOrange+1, ROOT.kTeal-1,
+              ROOT.kRed-3, ROOT.kCyan+2]
+
+    def plot_1d_eff(savename, graphs,
+                    labels=['Data', 'Simulation'],
+                    colors=colors,
+                    xlabel='', ylabel='Efficiency',
+                    xRange=[], additional_text=[]):
+        ng = len(graphs)
+        mg = ROOT.TMultiGraph()
+        for gi in range(ng):
+            graphs[gi].SetLineColor(colors[gi])
+            graphs[gi].SetMarkerColor(colors[gi])
+            mg.Add(graphs[gi])
+
+        canvas = ROOT.TCanvas(savename, savename, 800, 800)
+        mg.Draw('AP0')
+        mg.GetXaxis().SetTitle(xlabel)
+        if xRange:
+            mg.GetXaxis().SetRangeUser(*xRange)
+        mg.GetYaxis().SetTitle(ylabel)
+        mg.GetYaxis().SetRangeUser(0.8, 1.10)
+        legend = ROOT.TLegend(0.5, 0.70, 0.92, 0.92)
+        legend.SetTextFont(42)
+        legend.SetBorderSize(0)
+        legend.SetFillColor(0)
+        for gi in range(ng):
+            legend.AddEntry(graphs[gi], labels[gi], 'l')
+        legend.SetHeader('{} / {}'.format(num, denom))
+        legend.Draw()
+
+        if additional_text:
+            nother = len(additional_text)
+            dims = [0.18, 0.84-nother*0.04-0.02, 0.35, 0.84]
+            text = ROOT.TPaveText(*dims+['NB NDC'])
+            text.SetTextFont(42)
+            text.SetBorderSize(0)
+            text.SetFillColor(0)
+            text.SetTextAlign(11)
+            text.SetTextSize(0.03)
+            for rtext in additional_text:
+                text.AddText(rtext)
+            text.Draw()
+
+        CMS_lumi.cmsText = 'CMS'
+        CMS_lumi.writeExtraText = True
+        CMS_lumi.extraText = 'Preliminary'
+        CMS_lumi.lumi_13TeV = "%0.1f fb^{-1}" % (41.5)
+        CMS_lumi.CMS_lumi(canvas, 4, 11)
+
+        canvas.Print('{}.png'.format(savename))
+        canvas.Print('{}.pdf'.format(savename))
+
     # enumerate over the axis/variable to plot
     axes = [hists[extEffName].GetXaxis(),
             hists[extEffName].GetYaxis(),
@@ -402,56 +513,20 @@ def prepare(baseDir, particle, probe, resonance, era,
             for index in itertools.product(*indices):
                 graph_data = get_graph(hists[extEffName+'_efficiencyData'],
                                        axes[vi], vi, *index)
-                graph_data.SetLineColor(ROOT.kBlack)
-                graph_data.SetMarkerColor(ROOT.kBlack)
                 graph_mc = get_graph(hists[extEffName+'_efficiencyMC'],
                                      axes[vi], vi, *index)
-                graph_mc.SetLineColor(ROOT.kBlue)
-                graph_mc.SetMarkerColor(ROOT.kBlue)
-                mg = ROOT.TMultiGraph()
-                mg.Add(graph_data)
-                mg.Add(graph_mc)
-
-                cName = 'c' + extEffName + '_'.join([str(i) for i in index])\
-                    + variableLabel
-                canvas = ROOT.TCanvas(cName, cName, 800, 800)
-                mg.Draw('AP0')
-                mg.GetXaxis().SetTitle(get_variable_name_pretty(variableLabel))
+                xlabel = get_variable_name_pretty(variableLabel)
+                ylabel = 'Efficiency'
                 xRange = [axes[vi].GetBinLowEdge(1),
                           axes[vi].GetBinUpEdge(axes[vi].GetNbins())]
-                mg.GetXaxis().SetRangeUser(*xRange)
-                mg.GetYaxis().SetTitle('Efficiency')
-                mg.GetYaxis().SetRangeUser(0.8, 1.10)
-                legend = ROOT.TLegend(0.5, 0.70, 0.92, 0.92)
-                legend.SetTextFont(42)
-                legend.SetBorderSize(0)
-                legend.SetFillColor(0)
-                legend.AddEntry(graph_data, 'Data', 'l')
-                legend.AddEntry(graph_mc, 'Simulation', 'l')
-                legend.SetHeader('{} / {}'.format(num, denom))
-                legend.Draw()
-
-                nother = len(indices)
-                dims = [0.18, 0.84-nother*0.04-0.02, 0.35, 0.84]
-                text = ROOT.TPaveText(*dims+['NB NDC'])
-                text.SetTextFont(42)
-                text.SetBorderSize(0)
-                text.SetFillColor(0)
-                text.SetTextAlign(11)
-                text.SetTextSize(0.03)
+                additional_text = []
                 for novi, (ovi, ovl) in enumerate(zip(otherVariableIndices,
                                                       otherVariableLabels)):
                     xlow = axes[ovi].GetBinLowEdge(index[novi])
                     xhigh = axes[ovi].GetBinUpEdge(index[novi])
                     rtext = '{} < {} < {}'.format(
                         xlow, get_variable_name_pretty(ovl), xhigh)
-                    text.AddText(rtext)
-                text.Draw()
-                CMS_lumi.cmsText = 'CMS'
-                CMS_lumi.writeExtraText = True
-                CMS_lumi.extraText = 'Preliminary'
-                CMS_lumi.lumi_13TeV = "%0.1f fb^{-1}" % (41.5)
-                CMS_lumi.CMS_lumi(canvas, 4, 11)
+                    additional_text += [rtext]
                 plotDir = os.path.join(baseDir, 'plots',
                                        particle, probe,
                                        resonance, era,
@@ -462,42 +537,63 @@ def prepare(baseDir, particle, probe, resonance, era,
                                                 otherVariableLabel,
                                                 variableLabel)
                 plotPath = os.path.join(plotDir, plotName)
-                canvas.Print('{}.png'.format(plotPath))
-                canvas.Print('{}.pdf'.format(plotPath))
+                plot_1d_eff(plotPath, [graph_data, graph_mc],
+                            xlabel=xlabel, ylabel=ylabel,
+                            xRange=xRange, additional_text=additional_text)
+
+                # dataEfficiency systs
+                graphs = [get_graph(hists[extEffName+'_efficiencyData'],
+                                    axes[vi], vi, *index)]
+                labels = ['Nominal']
+                for iSyst in itertools.chain(
+                        systList['dataEff']['fitTypes'],
+                        systList['dataEff']['shiftTypes']):
+                    graphs += [get_graph(
+                        hists[extEffName+'_efficiencyData_'+iSyst],
+                        axes[vi], vi, *index)]
+                    labels += [iSyst]
+                plotName = '{}_{}_vs_{}_efficiencyData_syst'.format(
+                    effName,
+                    otherVariableLabel,
+                    variableLabel,
+                )
+                plotPath = os.path.join(plotDir, plotName)
+                plot_1d_eff(plotPath, graphs,
+                            labels=labels,
+                            xlabel=xlabel, ylabel=ylabel,
+                            xRange=xRange, additional_text=additional_text)
+
+                # mcEfficiency systs
+                graphs = [get_graph(hists[extEffName+'_efficiencyMC'],
+                                    axes[vi], vi, *index)]
+                labels = ['Nominal']
+                for iSyst in itertools.chain(
+                        systList['mcEff']['fitTypes'],
+                        systList['mcEff']['shiftTypes']):
+                    graphs += [get_graph(
+                        hists[extEffName+'_efficiencyMC_'+iSyst],
+                        axes[vi], vi, *index)]
+                    labels += [iSyst]
+                plotName = '{}_{}_vs_{}_efficiencyMC_syst'.format(
+                    effName,
+                    otherVariableLabel,
+                    variableLabel,
+                )
+                plotPath = os.path.join(plotDir, plotName)
+                plot_1d_eff(plotPath, graphs,
+                            labels=labels,
+                            xlabel=xlabel, ylabel=ylabel,
+                            xRange=xRange, additional_text=additional_text)
 
         # if no indices, easier, just itself
         else:
             graph_data = get_graph(hists[extEffName+'_efficiencyData'],
                                    axes[vi], vi)
-            graph_data.SetLineColor(ROOT.kBlack)
-            graph_data.SetMarkerColor(ROOT.kBlack)
             graph_mc = get_graph(hists[extEffName+'_efficiencyMC'],
                                  axes[vi], vi)
-            graph_mc.SetLineColor(ROOT.kBlue)
-            graph_mc.SetMarkerColor(ROOT.kBlue)
-            mg = ROOT.TMultiGraph()
-            mg.Add(graph_data)
-            mg.Add(graph_mc)
 
-            canvas = ROOT.TCanvas('c'+extEffName, 'c', 800, 800)
-            mg.Draw('AP0')
-            mg.GetXaxis().SetTitle(get_variable_name_pretty(variableLabel))
-            mg.GetYaxis().SetTitle('Efficiency')
-            mg.GetYaxis().SetRangeUser(0.8, 1.10)
-            legend = ROOT.TLegend(0.5, 0.70, 0.92, 0.92)
-            legend.SetTextFont(42)
-            legend.SetBorderSize(0)
-            legend.SetFillColor(0)
-            legend.AddEntry(graph_data, 'Data', 'l')
-            legend.AddEntry(graph_mc, 'Simulation', 'l')
-            legend.SetHeader('{} / {}'.format(num, denom))
-            legend.Draw()
-
-            CMS_lumi.cmsText = 'CMS'
-            CMS_lumi.writeExtraText = True
-            CMS_lumi.extraText = 'Preliminary'
-            CMS_lumi.lumi_13TeV = "%0.1f fb^{-1}" % (41.5)
-            CMS_lumi.CMS_lumi(canvas, 4, 11)
+            xlabel = get_variable_name_pretty(variableLabel)
+            ylabel = 'Efficiency'
             plotDir = os.path.join(baseDir, 'plots',
                                    particle, probe,
                                    resonance, era,
@@ -505,8 +601,8 @@ def prepare(baseDir, particle, probe, resonance, era,
             os.makedirs(plotDir, exist_ok=True)
             plotName = '{}_vs_{}'.format(effName, variableLabel)
             plotPath = os.path.join(plotDir, plotName)
-            canvas.Print('{}.png'.format(plotPath))
-            canvas.Print('{}.pdf'.format(plotPath))
+            plot_1d_eff(plotPath, [graph_data, graph_mc],
+                        xlabel=xlabel, ylabel=ylabel)
 
 
 def build_prepare_jobs(particle, probe, resonance, era,
