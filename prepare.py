@@ -90,6 +90,8 @@ def getSF(binName, fname):
 
 
 def getSyst(binName, fname, fitTypes, shiftTypes):
+    sf, sf_err, dataEff, dataErr, mcEff, mcErr = getSF(binName, fname)
+
     syst = {}
     for isyst in fitTypes:
         systfname = fname.replace('Nominal', isyst)
@@ -97,11 +99,11 @@ def getSyst(binName, fname, fitTypes, shiftTypes):
         tmp = getSF(binName, systfname)
         syst[isyst] = {
             'sf': tmp[0],
-            'err': tmp[1],
+            'err': abs(tmp[0]-sf),
             'dataEff': tmp[2],
-            'dataErr': tmp[3],
+            'dataErr': abs(tmp[2]-dataEff),
             'mcEff': tmp[4],
-            'mcErr': tmp[5],
+            'mcErr': abs(tmp[4]-mcEff),
         }
 
     for isyst in shiftTypes:
@@ -112,11 +114,11 @@ def getSyst(binName, fname, fitTypes, shiftTypes):
         tmpDn = getSF(binName, systDnfname)
         tmp = [
             (tmpUp[0]+tmpDn[0])/2,
-            (abs(tmpUp[1]-tmpUp[0])+abs(tmpDn[1]-tmpDn[0]))/2,
+            (abs(tmpUp[0]-sf)+abs(tmpDn[0]-sf))/2,
             (tmpUp[2]+tmpDn[2])/2,
-            (abs(tmpUp[3]-tmpUp[2])+abs(tmpDn[3]-tmpDn[2]))/2,
+            (abs(tmpUp[2]-dataEff)+abs(tmpDn[2]-dataEff))/2,
             (tmpUp[4]+tmpDn[4])/2,
-            (abs(tmpUp[5]-tmpUp[4])+abs(tmpDn[5]-tmpDn[4]))/2,
+            (abs(tmpUp[4]-mcEff)+abs(tmpDn[4]-mcEff))/2,
         ]
         syst[isyst] = {
             'sf': tmp[0],
@@ -128,19 +130,19 @@ def getSyst(binName, fname, fitTypes, shiftTypes):
         }
         syst[isyst+'Up'] = {
             'sf': tmpUp[0],
-            'err': tmpUp[1],
+            'err': abs(tmpUp[0]-sf),
             'dataEff': tmpUp[2],
-            'dataErr': tmpUp[3],
+            'dataErr': abs(tmpUp[2]-dataEff),
             'mcEff': tmpUp[4],
-            'mcErr': tmpUp[5],
+            'mcErr': abs(tmpUp[4]-mcEff),
         }
         syst[isyst+'Down'] = {
             'sf': tmpDn[0],
-            'err': tmpDn[1],
+            'err': abs(tmpDn[0]-sf),
             'dataEff': tmpDn[2],
-            'dataErr': tmpDn[3],
+            'dataErr': abs(tmpDn[2]-dataEff),
             'mcEff': tmpDn[4],
-            'mcErr': tmpDn[5],
+            'mcErr': abs(tmpDn[4]-mcEff),
         }
 
     return syst
