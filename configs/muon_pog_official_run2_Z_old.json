@@ -28,8 +28,6 @@
         "MediumPromptID": "Medium2016 == 1",
         "TightID": "Tight2012 == 1",
         "TightIDandIPCut": "Tight2012 == 1",
-        "HighPtID": "HighPt == 1",
-        "HighPtIDandIPCut": "HighPt == 1",
         "LooseRelIso": "combRelIsoPF04dBeta < 0.25",
         "TightRelIso": "combRelIsoPF04dBeta < 0.15"
     },
@@ -58,10 +56,10 @@
     ],
     "shifts": {
         "TagIsoUp": {
-            "selection": "tag_pt>26 and tag_abseta<2.4 and tag_IsoMu24==1 and pair_probeMultiplicity==1 and tag_combRelIsoPF04dBeta<0.3"
+            "selection": "tag_pt>26 and tag_abseta<2.4 and tag_IsoMu24==1 and pair_probeMultiplicity==1 and tag_combRelIsoPF04dBeta<0.3 and abs(pair_dz)<0.5"
         },
         "TagIsoDown": {
-            "selection": "tag_pt>26 and tag_abseta<2.4 and tag_IsoMu24==1 and pair_probeMultiplicity==1 and tag_combRelIsoPF04dBeta<0.1"
+            "selection": "tag_pt>26 and tag_abseta<2.4 and tag_IsoMu24==1 and pair_probeMultiplicity==1 and tag_combRelIsoPF04dBeta<0.1 and abs(pair_dz)<0.5"
         }
     },
     "fitShifts": {

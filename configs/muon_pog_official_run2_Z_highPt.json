@@ -1,38 +1,24 @@
 {
     "efficiencies": [
-        ["TrackerMuons", "genTracks"],
-        ["GlobalMuons", "genTracks"],
-        ["LooseID", "genTracks"],
-        ["MediumID", "genTracks"],
-        ["MediumPromptID", "genTracks"],
-        ["TightID", "genTracks"],
-        ["SoftID", "genTracks"],
-        ["LooseID", "TrackerMuons"],
-        ["MediumID", "TrackerMuons"],
-        ["MediumPromptID", "TrackerMuons"],
-        ["TightID", "TrackerMuons"],
-        ["SoftID", "TrackerMuons"],
-        ["LooseRelIso", "LooseID"],
-        ["LooseRelIso", "MediumID"],
-        ["LooseRelIso", "MediumPromptID"],
-        ["LooseRelIso", "TightIDandIPCut"],
-        ["TightRelIso", "MediumID"],
-        ["TightRelIso", "MediumPromptID"],
-        ["TightRelIso", "TightIDandIPCut"]
+        ["HighPtID", "genTracks"],
+        ["HighPtID", "TrackerMuons"],
+        ["TrkHighPtID", "genTracks"],
+        ["TrkHighPtID", "TrackerMuons"],
+        ["LooseRelTkIso", "HighPtIDandIPCut"],
+        ["TightRelTkIso", "HighPtIDandIPCut"],
+        ["LooseRelTkIso", "TrkHighPtIDandIPCut"],
+        ["TightRelTkIso", "TrkHighPtIDandIPCut"]
     ],
-    "selection": "tag_pt>29 and tag_abseta<2.4 and tag_IsoMu27==1 and pair_probeMultiplicity==1 and tag_combRelIsoPF04dBeta<0.2 and abs(pair_dz)<0.5",
+    "selection": "tag_pt>26 and tag_abseta<2.4 and tag_IsoMu24==1 and pair_probeMultiplicity==1 and tag_combRelIsoPF04dBeta<0.2 and abs(pair_dz)<0.5",
     "definitions": {
-        "genTracks": "((pt<20 and tag_mt<50 and mt<30) or (pt>20))",
+        "genTracks": "((pair_newTuneP_probe_pt<20 and tag_mt<50 and mt<30) or (pair_newTuneP_probe_pt>20))",
         "TrackerMuons": "TM == 1",
-        "GlobalMuons": "Glb == 1",
-        "LooseID": "CutBasedIdLoose == 1",
-        "MediumID": "CutBasedIdMedium == 1",
-        "MediumPromptID": "CutBasedIdMediumPrompt == 1",
-        "TightID": "CutBasedIdTight == 1",
-        "TightIDandIPCut": "CutBasedIdTight == 1",
-        "SoftID": "SoftCutBasedId == 1",
-        "LooseRelIso": "combRelIsoPF04dBeta < 0.25",
-        "TightRelIso": "combRelIsoPF04dBeta < 0.15"
+        "HighPtID": "CutBasedIdGlobalHighPt_new == 1",
+        "TrkHighPtID": "CutBasedIdTrkHighPt == 1",
+        "HighPtIDandIPCut": "CutBasedIdGlobalHighPt_new == 1",
+        "TrkHighPtIDandIPCut": "CutBasedIdTrkHighPt == 1",
+        "LooseRelTkIso": "relTkIso < 0.10",
+        "TightRelTkIso": "relTkIso < 0.05"
     },
     "binning": {
         "pt": [15, 20, 25, 30, 40, 50, 60, 120],
@@ -44,12 +30,12 @@
         "mcMass": "np.array(range(60*4, 140*4+1)) * 0.25"
     },
     "variables": {
-        "pt": {"variable": "pt", "pretty": "p_{T} (GeV)"},
+        "pt": {"variable": "pair_newTuneP_probe_pt", "pretty": "TuneP p_{T} (GeV)"},
         "abseta": {"variable": "abseta", "pretty": "|#eta|"},
         "eta": {"variable": "eta", "pretty": "#eta"},
         "njets": {"variable": "pair_nJets30", "pretty": "Number of jets (p_{T} > 30 GeV)"},
         "nvtx": {"variable": "tag_nVertices", "pretty": "Number of primary vertices"},
-        "mass": {"variable": "mass", "pretty": "m(#mu#mu) (GeV)"},
+        "mass": {"variable": "pair_newTuneP_probe_pt", "pretty": "m(#mu#mu) (GeV)"},
         "mcMass": {"variable": "mcMass", "pretty": "m(#mu#mu) (GeV)"}
     },
     "fitVariable": "mass",
@@ -59,10 +45,10 @@
     ],
     "shifts": {
         "TagIsoUp": {
-            "selection": "tag_pt>29 and tag_abseta<2.4 and tag_IsoMu27==1 and pair_probeMultiplicity==1 and tag_combRelIsoPF04dBeta<0.3 and abs(pair_dz)<0.5"
+            "selection": "tag_pt>26 and tag_abseta<2.4 and tag_IsoMu24==1 and pair_probeMultiplicity==1 and tag_combRelIsoPF04dBeta<0.3 and abs(pair_dz)<0.5"
         },
         "TagIsoDown": {
-            "selection": "tag_pt>29 and tag_abseta<2.4 and tag_IsoMu27==1 and pair_probeMultiplicity==1 and tag_combRelIsoPF04dBeta<0.1 and abs(pair_dz)<0.5"
+            "selection": "tag_pt>26 and tag_abseta<2.4 and tag_IsoMu24==1 and pair_probeMultiplicity==1 and tag_combRelIsoPF04dBeta<0.1 and abs(pair_dz)<0.5"
         }
     },
     "fitShifts": {
