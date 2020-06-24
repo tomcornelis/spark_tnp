@@ -175,12 +175,16 @@ def run_conversion(spark, particle, probe, resonance, era, subEra,
             passargs = {num: True}
             passargs.update(binargs)
             values, sumw2 = get_values(realized, mLabel, **passargs)
+            if not sum(values):
+                print('Warning: integral = 0 for', binname, 'Pass')
             edges = binning[fitVariable]
             hists[binname+'_Pass'] = get_hist(values, sumw2, edges)
 
             failargs = {num: False}
             failargs.update(binargs)
             values, sumw2 = get_values(realized, mLabel, **failargs)
+            if not sum(values):
+                print('Warning: integral = 0 for', binname, 'Fail')
             edges = binning[fitVariable]
             hists[binname+'_Fail'] = get_hist(values, sumw2, edges)
 
@@ -195,12 +199,16 @@ def run_conversion(spark, particle, probe, resonance, era, subEra,
                 passargs = {num: True}
                 passargs.update(binargs)
                 values, sumw2 = get_values(realized, mLabel, **passargs)
+                if not sum(values):
+                    print('Warning: integral = 0 for', binname, 'Pass_Gen')
                 edges = binning[fitVariableGen]
                 hists[binname+'_Pass_Gen'] = get_hist(values, sumw2, edges)
 
                 failargs = {num: False}
                 failargs.update(binargs)
                 values, sumw2 = get_values(realized, mLabel, **failargs)
+                if not sum(values):
+                    print('Warning: integral = 0 for', binname, 'Fail_Gen')
                 edges = binning[fitVariableGen]
                 hists[binname+'_Fail_Gen'] = get_hist(values, sumw2, edges)
 
