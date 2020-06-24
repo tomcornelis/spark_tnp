@@ -429,6 +429,13 @@ def prepare(baseDir, particle, probe, resonance, era,
             plotPath = os.path.join(plotDir, h)
             canvas.Modified()
             canvas.Update()
+
+            CMS_lumi.cmsText = 'CMS'
+            CMS_lumi.writeExtraText = True
+            CMS_lumi.extraText = 'Preliminary'
+            CMS_lumi.lumi_13TeV = "%0.1f fb^{-1}" % (lumi)
+            CMS_lumi.CMS_lumi(canvas, 4, 0)
+
             canvas.Print('{}.png'.format(plotPath))
             canvas.Print('{}.pdf'.format(plotPath))
 

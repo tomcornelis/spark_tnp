@@ -20,6 +20,7 @@ cmsTextSize = 0.75
 cmsTextOffset = 0.1
 
 relPosX = 0.045
+relPosXAlt = 0.115
 relPosY = 0.035
 relExtraDY = 1.2
 
@@ -145,9 +146,8 @@ def CMS_lumi(pad, iPeriod, iPosX):
                     extraText
                 )
     elif writeExtraText:
-        if iPosX == 0:
-            posX_ = L + relPosX*(1-L-R)
-            posY_ = 1 - T + lumiTextOffset*T
+        posX_ = L + relPosXAlt*(1-L-R)
+        posY_ = 1 - T + lumiTextOffset*T
 
         latex.SetTextFont(extraTextFont)
         latex.SetTextSize(extraTextSize*T)
