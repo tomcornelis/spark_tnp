@@ -35,7 +35,7 @@
         "eta": {"variable": "eta", "pretty": "#eta"},
         "njets": {"variable": "pair_nJets30", "pretty": "Number of jets (p_{T} > 30 GeV)"},
         "nvtx": {"variable": "tag_nVertices", "pretty": "Number of primary vertices"},
-        "mass": {"variable": "pair_newTuneP_probe_pt", "pretty": "m(#mu#mu) (GeV)"},
+        "mass": {"variable": "pair_newTuneP_mass", "pretty": "m(#mu#mu) (GeV)"},
         "mcMass": {"variable": "mcMass", "pretty": "m(#mu#mu) (GeV)"}
     },
     "fitVariable": "mass",
