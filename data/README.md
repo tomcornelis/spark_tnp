@@ -23,7 +23,11 @@ The structure is a list of objects with the following required entries:
     "root": ["/path/to/tnp*.root"],
     // the tree inside the rootfile
     "treename": "tpTree/fitter_tree",
+    // integrated luminosity in fb-1 (-1 for MC)
+    "luminosity": 5.933,
     // version number, in case a dataset is remade
     "version": 1
 }
 ```
+
+**Note**: 2016F has two components in the UL that is not yet correctly set.

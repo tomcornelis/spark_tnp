@@ -8,6 +8,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2016/Run2016B/tnp.parquet"],
         "root": [],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 5.933,
         "version": 1
     },
     {
@@ -19,6 +20,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2016/Run2016C/tnp.parquet"],
         "root": [],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 2.646,
         "version": 1
     },
     {
@@ -30,6 +32,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2016/Run2016D/tnp.parquet"],
         "root": [],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 4.353,
         "version": 1
     },
     {
@@ -41,6 +44,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2016/Run2016E/tnp.parquet"],
         "root": [],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 4.117,
         "version": 1
     },
     {
@@ -52,6 +56,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2016/Run2016F/tnp.parquet"],
         "root": [],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 3.186,
         "version": 1
     },
     {
@@ -63,6 +68,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2016/Run2016G/tnp.parquet"],
         "root": [],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 7.721,
         "version": 1
     },
     {
@@ -74,6 +80,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2016/Run2016H/tnp.parquet"],
         "root": [],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 8.857,
         "version": 1
     },
     {
@@ -85,6 +92,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2016/DY_madgraph/tnp.parquet"],
         "root": [],
         "treename": "tpTree/fitter_tree",
+        "luminosity": -1,
         "version": 1
     },
     {
@@ -96,6 +104,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2017/Run2017B/tnp.parquet"],
         "root": [],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 4.823,
         "version": 1
     },
     {
@@ -107,6 +116,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2017/Run2017C/tnp.parquet"],
         "root": [],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 9.664,
         "version": 1
     },
     {
@@ -118,6 +128,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2017/Run2017D/tnp.parquet"],
         "root": [],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 4.252,
         "version": 1
     },
     {
@@ -129,6 +140,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2017/Run2017E/tnp.parquet"],
         "root": [],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 9.278,
         "version": 1
     },
     {
@@ -140,6 +152,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2017/Run2017F/tnp.parquet"],
         "root": [],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 13.540,
         "version": 1
     },
     {
@@ -151,6 +164,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2017/DY_madgraph/tnp.parquet"],
         "root": [],
         "treename": "tpTree/fitter_tree",
+        "luminosity": -1,
         "version": 1
     },
     {
@@ -162,6 +176,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2018/Run2018A/tnp.parquet"],
         "root": [],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 14.00,
         "version": 1
     },
     {
@@ -173,6 +188,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2018/Run2018B/tnp.parquet"],
         "root": [],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 7.10,
         "version": 1
     },
     {
@@ -184,6 +200,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2018/Run2018C/tnp.parquet"],
         "root": [],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 6.94,
         "version": 1
     },
     {
@@ -195,6 +212,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2018/Run2018D/tnp.parquet"],
         "root": [],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 31.93,
         "version": 1
     },
     {
@@ -206,6 +224,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2018/DY_madgraph/tnp.parquet"],
         "root": [],
         "treename": "tpTree/fitter_tree",
+        "luminosity": -1,
         "version": 1
     },
     {
@@ -217,6 +236,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2016_UL_HIPM/Run2016B/tnp.parquet"],
         "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2016/102X/SingleMuon_Run2016Bver2_HIPM/tnpZ*.root"],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 5.933,
         "version": 1
     },
     {
@@ -228,6 +248,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2016_UL_HIPM/Run2016C/tnp.parquet"],
         "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2016/102X/SingleMuon_Run2016C_HIPM/tnpZ*.root"],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 2.646,
         "version": 1
     },
     {
@@ -239,6 +260,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2016_UL_HIPM/Run2016D/tnp.parquet"],
         "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2016/102X/SingleMuon_Run2016D_HIPM/tnpZ*.root"],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 4.353,
         "version": 1
     },
     {
@@ -250,6 +272,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2016_UL_HIPM/Run2016E/tnp.parquet"],
         "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2016/102X/SingleMuon_Run2016E_HIPM/tnpZ*.root"],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 4.117,
         "version": 1
     },
     {
@@ -261,6 +284,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2016_UL_HIPM/Run2016F/tnp.parquet"],
         "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2016/102X/SingleMuon_Run2016F_HIPM/tnpZ*.root"],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 3.186,
         "version": 1
     },
     {
@@ -272,6 +296,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2016_UL/Run2016F/tnp.parquet"],
         "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2016/102X/SingleMuon_Run2016F/tnpZ*.root"],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 0,
         "version": 1
     },
     {
@@ -283,6 +308,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2016_UL/Run2016G/tnp.parquet"],
         "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2016/102X/SingleMuon_Run2016G/tnpZ*.root"],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 7.721,
         "version": 1
     },
     {
@@ -294,6 +320,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2016_UL/Run2016H/tnp.parquet"],
         "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2016/102X/SingleMuon_Run2016H/tnpZ*.root"],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 8.857,
         "version": 1
     },
     {
@@ -305,6 +332,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2016_UL/DY_madgraph/tnp.parquet"],
         "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2016/102X/DY_M50_Madgraph/tnpZ*.root"],
         "treename": "tpTree/fitter_tree",
+        "luminosity": -1,
         "version": 1
     },
     {
@@ -316,6 +344,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2017_UL/Run2017B/tnp.parquet"],
         "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2017/102X/Run2017B/tnpZ*.root"],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 4.823,
         "version": 1
     },
     {
@@ -327,6 +356,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2017_UL/Run2017C/tnp.parquet"],
         "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2017/102X/Run2017C/tnpZ*.root"],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 9.664,
         "version": 1
     },
     {
@@ -338,6 +368,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2017_UL/Run2017D/tnp.parquet"],
         "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2017/102X/Run2017D/tnpZ*.root"],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 4.252,
         "version": 1
     },
     {
@@ -349,6 +380,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2017_UL/Run2017E/tnp.parquet"],
         "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2017/102X/Run2017E_99Percent/tnpZ*.root"],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 9.278,
         "version": 1
     },
     {
@@ -360,6 +392,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2017_UL/Run2017F/tnp.parquet"],
         "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2017/102X/Run2017F_99Percent/tnpZ*.root"],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 13.540,
         "version": 1
     },
     {
@@ -371,6 +404,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2017_UL/DY_madgraph/tnp.parquet"],
         "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2017/102X/DY_M50_pdfgwt/tnpZ*.root"],
         "treename": "tpTree/fitter_tree",
+        "luminosity": -1,
         "version": 1
     },
     {
@@ -382,6 +416,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2018_UL/Run2018A/tnp.parquet"],
         "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2018/102X/SingleMuon_Run2018A/tnpZ*.root"],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 14.00,
         "version": 1
     },
     {
@@ -393,6 +428,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2018_UL/Run2018B/tnp.parquet"],
         "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2018/102X/SingleMuon_Run2018B/tnpZ*.root"],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 7.10,
         "version": 1
     },
     {
@@ -404,6 +440,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2018_UL/Run2018C/tnp.parquet"],
         "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2018/102X/SingleMuon_Run2018C/tnpZ*.root"],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 6.94,
         "version": 1
     },
     {
@@ -415,6 +452,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2018_UL/Run2018D/tnp.parquet"],
         "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2018/102X/SingleMuon_Run2018D/tnpZ*.root"],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 31.93,
         "version": 1
     },
     {
@@ -426,6 +464,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2018_UL/DY_madgraph/tnp.parquet"],
         "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2018/102X/DY_M50_Madgraph/tnpZ*.root"],
         "treename": "tpTree/fitter_tree",
+        "luminosity": -1,
         "version": 1
     },
     {
@@ -437,6 +476,7 @@
         "parquet": ["/cms/muon_pog/parquet/Z/Run2018_UL/DY_powheg/tnp.parquet"],
         "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2018/102X/DY_M50to120_Powheg/tnpZ*.root"],
         "treename": "tpTree/fitter_tree",
+        "luminosity": -1,
         "version": 1
     }
 ]

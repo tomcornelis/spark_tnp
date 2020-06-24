@@ -14,6 +14,7 @@ from muon_definitions import (get_data_mc_sub_eras,
                               get_bin_name,
                               get_extended_eff_name,
                               get_variables_name)
+from registry import registry
 
 ROOT.gROOT.SetBatch()
 ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = 1001;")
@@ -169,6 +170,9 @@ def getSyst(binName, fname, fitTypes, shiftTypes):
 
 def prepare(baseDir, particle, probe, resonance, era,
             config, num, denom, variableLabels):
+
+    subEra = era.split('_')[0]  # data subera is beginning of era
+    lumi = registry.luminosity(particle, probe, resonance, era, subEra)
     hists = {}
 
     effName = get_eff_name(num, denom)
@@ -511,7 +515,7 @@ def prepare(baseDir, particle, probe, resonance, era,
         CMS_lumi.cmsText = 'CMS'
         CMS_lumi.writeExtraText = True
         CMS_lumi.extraText = 'Preliminary'
-        CMS_lumi.lumi_13TeV = "%0.1f fb^{-1}" % (41.5)
+        CMS_lumi.lumi_13TeV = "%0.1f fb^{-1}" % (lumi)
         CMS_lumi.CMS_lumi(canvas, 4, 11)
 
         canvas.Print('{}.png'.format(savename))

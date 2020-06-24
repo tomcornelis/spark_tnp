@@ -8,6 +8,7 @@
         "parquet": ["/cms/muon_pog/parquet/JPsi/Run2016_HI_pPb_8TeV/Run2016/tnp.parquet"],
         "root": [],
         "treename": "tpTree/fitter_tree",
+        "luminosity": -1,
         "version": 1
     },
     {
@@ -19,6 +20,7 @@
         "parquet": ["/cms/muon_pog/parquet/JPsi/Run2017_UL/Run2017B/tnp.parquet"],
         "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2017/102X/Jpsi/Run2017B/tnpJPsi*.root"],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 4.823,
         "version": 1
     },
     {
@@ -30,6 +32,7 @@
         "parquet": ["/cms/muon_pog/parquet/JPsi/Run2017_UL/Run2017C/tnp.parquet"],
         "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2017/102X/Jpsi/Run2017C/tnpJPsi*.root"],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 9.664,
         "version": 1
     },
     {
@@ -41,6 +44,7 @@
         "parquet": ["/cms/muon_pog/parquet/JPsi/Run2017_UL/Run2017D/tnp.parquet"],
         "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2017/102X/Jpsi/Run2017D/tnpJPsi*.root"],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 4.252,
         "version": 1
     },
     {
@@ -52,6 +56,7 @@
         "parquet": ["/cms/muon_pog/parquet/JPsi/Run2017_UL/Run2017E/tnp.parquet"],
         "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2017/102X/Jpsi/Run2017E/tnpJPsi*.root"],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 9.278,
         "version": 1
     },
     {
@@ -63,6 +68,7 @@
         "parquet": ["/cms/muon_pog/parquet/JPsi/Run2017_UL/Run2017F/tnp.parquet"],
         "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2017/102X/Jpsi/Run2017F/tnpJPsi*.root"],
         "treename": "tpTree/fitter_tree",
+        "luminosity": 13.540,
         "version": 1
     },
     {
@@ -74,6 +80,7 @@
         "parquet": ["/cms/muon_pog/parquet/JPsi/Run2017_UL/Jpsi/tnp.parquet"],
         "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2017/102X/Jpsi/MC_Jpsi_pt8GeV/tnpJPsi*.root"],
         "treename": "tpTree/fitter_tree",
+        "luminosity": -1,
         "version": 1
     }
 ]

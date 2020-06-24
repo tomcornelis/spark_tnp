@@ -46,6 +46,10 @@ class Registry:
             raise ValueError('Multiple treenames for query')
         return treename
 
+    def luminosity(self, particle, probe, resonance, era, subEra):
+        df = self._reduce(particle, probe, resonance, era, subEra)
+        return df.luminosity.sum()
+
 
 registry = Registry()
 
