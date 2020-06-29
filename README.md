@@ -18,7 +18,7 @@ cd spark_tnp
 source env.sh
 kinit
 ./tnp_fitter.py flatten muon generalTracks Z Run2018_UL configs/muon_example.json --baseDir ./example
-./tnp_fitter.py fit muon generalTracks Z Run2018_UL configs/muon_example.json --baseDir ./example -j 16
+./tnp_fitter.py fit muon generalTracks Z Run2018_UL configs/muon_example.json --baseDir ./example
 ./tnp_fitter.py prepare muon generalTracks Z Run2018_UL configs/muon_example.json --baseDir ./example
 ```
 
@@ -177,6 +177,10 @@ which can be safely ignored.
 ### Fit histograms
 
 Histogram fitting uses local running or condor.
+
+**Note:** the first time you run a fit it will compile the Root classes. Don't use `-j` option the first time you run fits.
+It will try to compile the modules multiple times and throw errors. Instead, use single core to run one fit, then ctrl-c and use the `-j` option
+(it won't compile again).
 
 To run locally (with 16 threads):
 ```bash
