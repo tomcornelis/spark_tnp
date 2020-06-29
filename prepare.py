@@ -182,7 +182,7 @@ def prepare(baseDir, particle, probe, resonance, era,
 
     systList = config.get('systematics',
                           {x: {'fitTypes': [],
-                               'shittTypes': []}
+                               'shiftTypes': []}
                            for x in ['SF', 'dataEff', 'mcEff']})
 
     def get_variable_name_pretty(variableLabel):
