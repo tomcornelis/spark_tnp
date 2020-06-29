@@ -438,6 +438,7 @@ def prepare(baseDir, particle, probe, resonance, era,
 
             canvas.Print('{}.png'.format(plotPath))
             canvas.Print('{}.pdf'.format(plotPath))
+            canvas.Print('{}.root'.format(plotPath))
 
     tfile.Close()
 
@@ -527,6 +528,7 @@ def prepare(baseDir, particle, probe, resonance, era,
 
         canvas.Print('{}.png'.format(savename))
         canvas.Print('{}.pdf'.format(savename))
+        canvas.Print('{}.root'.format(savename))
 
     # enumerate over the axis/variable to plot
     axes = [hists[extEffName].GetXaxis(),
