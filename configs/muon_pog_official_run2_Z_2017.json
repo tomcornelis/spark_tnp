@@ -20,9 +20,10 @@
         ["TightRelIso", "MediumPromptID"],
         ["TightRelIso", "TightIDandIPCut"]
     ],
-    "selection": "tag_pt>29 and tag_abseta<2.4 and tag_IsoMu27==1 and pair_probeMultiplicity==1 and tag_combRelIsoPF04dBeta<0.2 and abs(pair_dz)<0.5",
+    "selection": "tag_pt>29 and tag_abseta<2.4 and tag_IsoMu27==1 and pair_probeMultiplicity==1 and tag_combRelIsoPF04dBeta<0.2 and abs(pair_dz)<0.5 and dxyPVdzmin<0.2 and tag_dxyPVdzmin<0.2 and abs(dzPV)<0.5 and abs(tag_dzPV)<0.5",
     "definitions": {
-        "genTracks": "((pt<20 and tag_mt<50 and mt<30) or (pt>20))",
+        "genTracks": "((pt<20 and mt<30) or (pt>20))",
+        "isolatedGenTracks": "combRelIsoPF04dBeta < 0.4",
         "TrackerMuons": "TM == 1",
         "GlobalMuons": "Glb == 1",
         "LooseID": "CutBasedIdLoose == 1",
