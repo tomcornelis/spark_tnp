@@ -1,5 +1,57 @@
+
+
 # spark-tnp
 Tag and probe analysis using Apache Spark.
+
+## Step-by-step instruction (as done for the leptonMva scale factors)
+
+This package is quite complicated, we therefore list here everything step by step
+
+
+### Before you begin
+
+- Request access to the cluster in the help document found [here](https://hadoop-user-guide.web.cern.ch/hadoop-user-guide/getstart/access.html).
+- Log into [https://swan.cern.ch](https://swan.cern.ch) with software stack *96 python 3* and spark cluster *cloud containers (8KS)*
+- Click on "download project from git" and use [https://github.com/tomcornelis/spark\_tnp](https://github.com/tomcornelis/spark_tnp) (or your own fork)
+- Once logged in, you will get a /eos/user/${USER:0:1}/$USER/SWAN\_projects directory in your eos area, in which you can find the spar\_tnp git repository.
+  At the top bar in [https://swan.cern.ch](https://swan.cern.ch) you can choose to start a new terminal if needed, but it is easier to simple access the
+  git repository through good old lxplus, especially if you want to have your usual shell environment.
+
+### ROOT to PARQUET
+
+- In SWAN, go to the following notebook: spark\_tnp/notebooks/RootToParquet.ipynb
+- Run the first cell by clicking on "Run" once
+- Start the Spark cluster connection by clicking on the star (it seems default settings are those who are mentioned in the notebook documentation)
+- Run cell 2
+- Check if the paths to the filenames in cell 3 are still correct
+- Run the next cells
+- Does not work for reasons I do not understand yet (py4j.protocol.Py4JNetworkError: Answer from Java side is empty error)
+
+### ROOT to PARQUET (attempt 2)
+
+- Connect to a hadoop edge node (from lxplus):
+```
+  ssh it-hadoop-client
+  kinit
+  source /cvmfs/sft.cern.ch/lcg/views/LCG_97python3/x86_64-centos7-gcc8-opt/setup.sh
+  source /cvmfs/sft.cern.ch/lcg/etc/hadoop-confext/hadoop-setconf.sh analytix
+```
+- Copy the ROOT files to hdfs:
+```
+   hdfs dfs -mkdir hdfs://analytix/user/$USER/tnpTuples_muons
+   hdfs dfs -cp root://eoscms.cern.ch//eos/user/${USER:0:1}/$USER/tnpTuples_muons/updated/TnPTreeZ_LegacyRereco07Aug17_SingleMuon_Run2016F_GoldenJSON.root hdfs://analytix/user/$USER/tnpTuples_muons
+```
+- Get some error like this:
+```
+  /cvmfs/sft.cern.ch/lcg/releases/LCG_97python3/./java/8u222/x86_64-centos7-gcc8-opt/bin/java: symbol lookup error: /tmp/libhadoop-xrootd-1.0.5374451630022773509.so: undefined symbol: _ZN5XrdCl3URLC1ERKSs
+```
+
+
+
+
+*I am stuck now*
+
+
 
 ## Before you begin
 This package uses Apache Spark clusters.
