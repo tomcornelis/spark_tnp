@@ -9,9 +9,10 @@
         ["LooseRelTkIso", "TrkHighPtIDandIPCut"],
         ["TightRelTkIso", "TrkHighPtIDandIPCut"]
     ],
-    "selection": "tag_pt>26 and tag_abseta<2.4 and tag_IsoMu24==1 and pair_probeMultiplicity==1 and tag_combRelIsoPF04dBeta<0.2 and abs(pair_dz)<0.5",
+    "selection": "tag_pt>26 and tag_abseta<2.4 and tag_IsoMu24==1 and pair_probeMultiplicity==1 and tag_combRelIsoPF04dBeta<0.2 and abs(pair_dz)<0.5 and dxyPVdzmin<0.2 and tag_dxyPVdzmin<0.2 and abs(dzPV)<0.5 and abs(tag_dzPV)<0.5",
     "definitions": {
-        "genTracks": "((pair_newTuneP_probe_pt<20 and tag_mt<50 and mt<30) or (pair_newTuneP_probe_pt>20))",
+        "genTracks": "((pair_newTuneP_probe_pt<20 and mt<30) or (pair_newTuneP_probe_pt>20))",
+        "isolatedGenTracks": "relTkIso < 0.20",
         "TrackerMuons": "TM == 1",
         "HighPtID": "CutBasedIdGlobalHighPt_new == 1",
         "TrkHighPtID": "CutBasedIdTrkHighPt == 1",

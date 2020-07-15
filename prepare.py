@@ -628,6 +628,8 @@ def prepare(baseDir, particle, probe, resonance, era,
 
             xlabel = get_variable_name_pretty(variableLabel)
             ylabel = 'Efficiency'
+            xRange = [axes[0].GetBinLowEdge(1),
+                      axes[0].GetBinUpEdge(axes[0].GetNbins())]
             plotDir = os.path.join(baseDir, 'plots',
                                    particle, probe,
                                    resonance, era,
@@ -636,7 +638,8 @@ def prepare(baseDir, particle, probe, resonance, era,
             plotName = '{}_vs_{}'.format(effName, variableLabel)
             plotPath = os.path.join(plotDir, plotName)
             plot_1d_eff(plotPath, [graph_data, graph_mc],
-                        xlabel=xlabel, ylabel=ylabel)
+                        xlabel=xlabel, ylabel=ylabel,
+                        xRange=xRange)
 
 
 def build_prepare_jobs(particle, probe, resonance, era,
