@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import os
 import glob
 import getpass
@@ -11,16 +12,12 @@ def run_convert(spark, particle, probe, resonance, era, subEra):
     Converts a directory of root files into parquet
     '''
 
-    baseDir = os.path.join(
-        '/hdfs/analytix.cern.ch/user',
-        getpass.getuser(), 'root',
-        particle, resonance, era, subEra
-        )
-
-    fnames = glob.glob(os.path.join(baseDir, f'{baseDir}/*.root'))
+  #  fnames = glob.glob(os.path.join('/*.root'))
+    fnames = glob.glob('/hdfs/analytix.cern.ch/user/tomc/tnpTuples_muons/MC_Moriond17_DY_tranch4Premix_part*.root')
     fnames = [f.replace('/hdfs/analytix.cern.ch',
                         'hdfs://analytix') for f in fnames]
 
+ 
     outDir = os.path.join('parquet', particle, resonance, era, subEra)
     outname = os.path.join(outDir, 'tnp.parquet')
 
@@ -33,9 +30,7 @@ def run_convert(spark, particle, probe, resonance, era, subEra):
         current = fnames[:batchsize]
         fnames = fnames[batchsize:]
 
-        rootfiles = spark.read.format("root")\
-                         .option('tree', treename)\
-                         .load(current)
+        rootfiles = spark.read.format("root").option('tree', treename).load(current)
         # merge rootfiles. chosen to make files of 8-32 MB (input)
         # become at most 1 GB (parquet recommendation)
         # https://parquet.apache.org/documentation/latest/
@@ -45,8 +40,7 @@ def run_convert(spark, particle, probe, resonance, era, subEra):
             rootfiles.write.parquet(outname)
             new = False
         else:
-            rootfiles.write.mode('append')\
-                     .parquet(outname)
+            rootfiles.write.mode('append').parquet(outname)
 
 
 def run_all(particle, probe, resonance, era):
@@ -70,7 +64,30 @@ def run_all(particle, probe, resonance, era):
     print(sc.getConf().toDebugString())
 
     for subEra in subEras:
+        if not 'madgraph' in subEra: continue
         print('Converting', particle, probe, resonance, era, subEra)
         run_convert(spark, particle, probe, resonance, era, subEra)
 
     spark.stop()
+
+
+
+
+baseDir = '/eos/user/t/tomc/tnpTuples_muons/updated'
+
+fnamesMap = {
+    'Z': {
+        'Run2016': {
+            'Run2016B': os.path.join(baseDir, 'TnPTreeZ_LegacyRereco07Aug17_SingleMuon_Run2016B_GoldenJSON.root'),
+            'Run2016C': os.path.join(baseDir, 'TnPTreeZ_LegacyRereco07Aug17_SingleMuon_Run2016C_GoldenJSON.root'),
+            'Run2016D': os.path.join(baseDir, 'TnPTreeZ_LegacyRereco07Aug17_SingleMuon_Run2016D_GoldenJSON.root'),
+            'Run2016E': os.path.join(baseDir, 'TnPTreeZ_LegacyRereco07Aug17_SingleMuon_Run2016E_GoldenJSON.root'),
+            'Run2016F': os.path.join(baseDir, 'TnPTreeZ_LegacyRereco07Aug17_SingleMuon_Run2016F_GoldenJSON.root'),
+            'Run2016G': os.path.join(baseDir, 'TnPTreeZ_LegacyRereco07Aug17_SingleMuon_Run2016G2_GoldenJSON.root'),
+            'Run2016H': os.path.join(baseDir, 'TnPTreeZ_LegacyRereco07Aug17_SingleMuon_Run2016H_GoldenJSON.root'),
+            'DY_madgraph': [f for f in glob.glob(os.path.join(baseDir, 'MC_Moriond17_DY_tranch4Premix_part*.root')) if 'hadd' not in f],
+        },
+    },
+}
+
+run_all('muon', 'generalTracks', 'Z', 'Run2016')

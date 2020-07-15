@@ -36,20 +36,21 @@ This package is quite complicated, we therefore list here everything step by ste
   source /cvmfs/sft.cern.ch/lcg/views/LCG_97python3/x86_64-centos7-gcc8-opt/setup.sh
   source /cvmfs/sft.cern.ch/lcg/etc/hadoop-confext/hadoop-setconf.sh analytix
 ```
-- Copy the ROOT files to hdfs:
+- Copy the ROOT files to hdfs (note use the copyFromLocal command, the cp command does not work):
 ```
    hdfs dfs -mkdir hdfs://analytix/user/$USER/tnpTuples_muons
-   hdfs dfs -cp root://eoscms.cern.ch//eos/user/${USER:0:1}/$USER/tnpTuples_muons/updated/TnPTreeZ_LegacyRereco07Aug17_SingleMuon_Run2016F_GoldenJSON.root hdfs://analytix/user/$USER/tnpTuples_muons
+   for i in /eos/user/${USER:0:1}/$USER/tnpTuples_muons/updated/*.root;
+     do (hdfs dfs -copyFromLocal $i hdfs://analytix/user/$USER/tnpTuples_muons/);
+   done
+   hdfs dfs -ls hdfs://analytix/user/$USER/tnpTuples_muons 
 ```
-- Get some error like this:
-```
-  /cvmfs/sft.cern.ch/lcg/releases/LCG_97python3/./java/8u222/x86_64-centos7-gcc8-opt/bin/java: symbol lookup error: /tmp/libhadoop-xrootd-1.0.5374451630022773509.so: undefined symbol: _ZN5XrdCl3URLC1ERKSs
-```
+
+* Apparently we can't copy all of them to analytix at the same time, because you reach your disk space quota *
+* Also this attempt to convert ROOT to PARQUET is failing, large list of java errors I don't understand yet *
+
+* I am stuck now *
 
 
-
-
-*I am stuck now*
 
 
 
