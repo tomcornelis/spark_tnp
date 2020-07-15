@@ -291,6 +291,18 @@
         "particle": "muon",
         "resonance": "Z",
         "era": "Run2016_UL",
+        "subEra": "DY_madgraph_HIPM",
+        "probe": "generalTracks",
+        "parquet": ["/cms/muon_pog/parquet/Z/Run2016_UL_HIPM/DY_madgraph/tnp.parquet"],
+        "root": ["/eos/cms/store/group/phys_muon/TagAndProbe/ULRereco/2016/102X/DY_M50_Madgraph_preVFP/tnpZ*.root"],
+        "treename": "tpTree/fitter_tree",
+        "luminosity": -1,
+        "version": 1
+    },
+    {
+        "particle": "muon",
+        "resonance": "Z",
+        "era": "Run2016_UL",
         "subEra": "Run2016F",
         "probe": "generalTracks",
         "parquet": ["/cms/muon_pog/parquet/Z/Run2016_UL/Run2016F/tnp.parquet"],
