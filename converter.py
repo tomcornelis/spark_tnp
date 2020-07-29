@@ -1,10 +1,44 @@
 #!/usr/bin/env python3
-import os
+import os, shutil
 import glob
 import getpass
 from pyspark.sql import SparkSession
 
 from muon_definitions import (get_allowed_sub_eras)
+
+# Using wildcards for the filenames, the glob will catch the right files
+user      = getpass.getuser() 
+sourceDir = '/eos/user/%s/%s/tnpTuples_muons/updated4' % (user[0], user)
+fnamesMap = {
+    'Z': {
+        'Run2016': {
+            'Run2016B': '*Run2016B*.root',
+            'Run2016C': '*Run2016C*.root',
+            'Run2016D': '*Run2016D*.root',
+            'Run2016E': '*Run2016E*.root',
+            'Run2016F': '*Run2016F*.root',
+            'Run2016G': '*Run2016G*.root',
+            'Run2016H': '*Run2016H*.root',
+            'DY_madgraph': 'MC_Moriond17_DY*.root',
+        },
+        'Run2017': {
+            'Run2017B': '*Run2017B*.root',
+            'Run2017C': '*Run2017C*.root',
+            'Run2017D': '*Run2017D*.root',
+            'Run2017E': '*Run2017E*.root',
+            'Run2017F': '*Run2017F*.root',
+            'DY_madgraph': 'TnPTree_94X_DYJetsToLL_M50_Madgraph*.root',
+        },
+        'Run2018': {
+    #        'Run2018A': '*Run2018A*.root',
+    #        'Run2018B': '*Run2018B*.root',
+    #        'Run2018C': '*Run2018C*.root',
+    #        'Run2018D': '*Run2018D*.root',
+            'DY_madgraph': 'TnPTreeZ_102XAutumn18_DYJetsToLL_M50_MadgraphMLM*.root'
+        },
+    },
+}
+
 
 
 def run_convert(spark, particle, probe, resonance, era, subEra):
@@ -12,42 +46,51 @@ def run_convert(spark, particle, probe, resonance, era, subEra):
     Converts a directory of root files into parquet
     '''
 
-  #  fnames = glob.glob(os.path.join('/*.root'))
-    fnames = glob.glob('/hdfs/analytix.cern.ch/user/tomc/tnpTuples_muons/MC_Moriond17_DY_tranch4Premix_part*.root')
-    fnames = [f.replace('/hdfs/analytix.cern.ch',
-                        'hdfs://analytix') for f in fnames]
 
+
+    fnames = glob.glob(os.path.join(sourceDir, fnamesMap[resonance][era][subEra]))
  
     outDir = os.path.join('parquet', particle, resonance, era, subEra)
     outname = os.path.join(outDir, 'tnp.parquet')
+    try:    shutil.rmtree('/hdfs/analytix.cern.ch/user/%s/%s' % (user, outname)) # remove previous tests or ROOT to parquet conversions
+    except: pass
 
     treename = 'tpTree/fitter_tree'
 
     # process batchsize files at a time
-    batchsize = 500
+    batchsize = 1
     new = True
     while fnames:
         current = fnames[:batchsize]
         fnames = fnames[batchsize:]
 
-        rootfiles = spark.read.format("root").option('tree', treename).load(current)
+        current_analytix = [i.replace(sourceDir, 'hdfs://analytix/user/%s/' % user) for i in current]
+        for x, y in zip(current, current_analytix):
+          shutil.copy(x, y.replace('hdfs://analytix', '/hdfs/analytix.cern.ch'))
+
+        print('%s %s' % (treename, current))
+        rootfiles = spark.read.format("root").option('tree', treename).load(current_analytix)
         # merge rootfiles. chosen to make files of 8-32 MB (input)
         # become at most 1 GB (parquet recommendation)
         # https://parquet.apache.org/documentation/latest/
         # .coalesce(int(len(current)/32)) \
         # but it is too slow for now, maybe try again later
         if new:
-            rootfiles.write.parquet(outname)
-            new = False
+          rootfiles.write.parquet(outname)
+          new = False
         else:
-            rootfiles.write.mode('append').parquet(outname)
+          rootfiles.write.mode('append').parquet(outname)
+
+        for i in current_analytix: # immediately delete the files from analytix because of ridicously low disk quota
+          os.remove(i.replace('hdfs://analytix', '/hdfs/analytix.cern.ch'))
+        shutil.rmtree('/hdfs/analytix.cern.ch/user/%s/.Trash' % user) # because otherwise you reach the disk quota because of the trash bin
 
 
 def run_all(particle, probe, resonance, era):
     subEras = get_allowed_sub_eras(resonance, era)
 
     local_jars = ','.join([
-        './laurelin-1.0.0.jar',
+        './laurelin-1.1.1.jar',
         './log4j-api-2.13.0.jar',
         './log4j-core-2.13.0.jar',
     ])
@@ -58,36 +101,19 @@ def run_all(particle, probe, resonance, era):
         .config("spark.jars", local_jars)\
         .config("spark.driver.extraClassPath", local_jars)\
         .config("spark.executor.extraClassPath", local_jars)\
+        .config("spark.debug.maxToStringFields", 500)\
         .getOrCreate()
 
     sc = spark.sparkContext
     print(sc.getConf().toDebugString())
 
-    for subEra in subEras:
-        if not 'madgraph' in subEra: continue
+    for subEra in fnamesMap[resonance][era]:
         print('Converting', particle, probe, resonance, era, subEra)
         run_convert(spark, particle, probe, resonance, era, subEra)
 
     spark.stop()
 
 
-
-
-baseDir = '/eos/user/t/tomc/tnpTuples_muons/updated'
-
-fnamesMap = {
-    'Z': {
-        'Run2016': {
-            'Run2016B': os.path.join(baseDir, 'TnPTreeZ_LegacyRereco07Aug17_SingleMuon_Run2016B_GoldenJSON.root'),
-            'Run2016C': os.path.join(baseDir, 'TnPTreeZ_LegacyRereco07Aug17_SingleMuon_Run2016C_GoldenJSON.root'),
-            'Run2016D': os.path.join(baseDir, 'TnPTreeZ_LegacyRereco07Aug17_SingleMuon_Run2016D_GoldenJSON.root'),
-            'Run2016E': os.path.join(baseDir, 'TnPTreeZ_LegacyRereco07Aug17_SingleMuon_Run2016E_GoldenJSON.root'),
-            'Run2016F': os.path.join(baseDir, 'TnPTreeZ_LegacyRereco07Aug17_SingleMuon_Run2016F_GoldenJSON.root'),
-            'Run2016G': os.path.join(baseDir, 'TnPTreeZ_LegacyRereco07Aug17_SingleMuon_Run2016G2_GoldenJSON.root'),
-            'Run2016H': os.path.join(baseDir, 'TnPTreeZ_LegacyRereco07Aug17_SingleMuon_Run2016H_GoldenJSON.root'),
-            'DY_madgraph': [f for f in glob.glob(os.path.join(baseDir, 'MC_Moriond17_DY_tranch4Premix_part*.root')) if 'hadd' not in f],
-        },
-    },
-}
-
-run_all('muon', 'generalTracks', 'Z', 'Run2016')
+#run_all('muon', 'generalTracks', 'Z', 'Run2016')
+#run_all('muon', 'generalTracks', 'Z', 'Run2017')
+run_all('muon', 'generalTracks', 'Z', 'Run2018')

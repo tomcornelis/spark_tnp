@@ -19,16 +19,6 @@ This package is quite complicated, we therefore list here everything step by ste
 
 ### ROOT to PARQUET
 
-- In SWAN, go to the following notebook: spark\_tnp/notebooks/RootToParquet.ipynb
-- Run the first cell by clicking on "Run" once
-- Start the Spark cluster connection by clicking on the star (it seems default settings are those who are mentioned in the notebook documentation)
-- Run cell 2
-- Check if the paths to the filenames in cell 3 are still correct
-- Run the next cells
-- Does not work for reasons I do not understand yet (py4j.protocol.Py4JNetworkError: Answer from Java side is empty error)
-
-### ROOT to PARQUET (attempt 2)
-
 - Connect to a hadoop edge node (from lxplus):
 ```
   ssh it-hadoop-client
@@ -36,19 +26,21 @@ This package is quite complicated, we therefore list here everything step by ste
   source /cvmfs/sft.cern.ch/lcg/views/LCG_97python3/x86_64-centos7-gcc8-opt/setup.sh
   source /cvmfs/sft.cern.ch/lcg/etc/hadoop-confext/hadoop-setconf.sh analytix
 ```
-- Copy the ROOT files to hdfs (note use the copyFromLocal command, the cp command does not work):
+- Update the paths (if needed) in the converter.py script and run it
 ```
-   hdfs dfs -mkdir hdfs://analytix/user/$USER/tnpTuples_muons
-   for i in /eos/user/${USER:0:1}/$USER/tnpTuples_muons/updated/*.root;
-     do (hdfs dfs -copyFromLocal $i hdfs://analytix/user/$USER/tnpTuples_muons/);
-   done
-   hdfs dfs -ls hdfs://analytix/user/$USER/tnpTuples_muons 
+  ./converter.py
 ```
+- The above step might fail a few times randomly. In order to avoid disk space issues the ROOT files are copied one by one to the analytix cluster and deleted immediately after.
 
-* Apparently we can't copy all of them to analytix at the same time, because you reach your disk space quota *
-* Also this attempt to convert ROOT to PARQUET is failing, large list of java errors I don't understand yet *
 
-* I am stuck now *
+### ROOT to PARQUET (alternative way)
+
+- In SWAN, go to the following notebook: spark\_tnp/notebooks/RootToParquet.ipynb
+- Run the first cell by clicking on "Run" once
+- Start the Spark cluster connection by clicking on the star (it seems default settings are those who are mentioned in the notebook documentation)
+- Run cell 2
+- Check if the paths to the filenames in cell 3 are still correct
+- Run the next cells
 
 
 
