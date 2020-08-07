@@ -8,7 +8,7 @@ from muon_definitions import (get_allowed_sub_eras)
 
 # Using wildcards for the filenames, the glob will catch the right files
 user      = getpass.getuser() 
-sourceDir = '/eos/user/%s/%s/tnpTuples_muons/updated4' % (user[0], user)
+sourceDir = '/eos/user/%s/%s/tnpTuples_muons/updated7' % (user[0], user)
 fnamesMap = {
     'Z': {
         'Run2016': {
@@ -30,10 +30,10 @@ fnamesMap = {
             'DY_madgraph': 'TnPTree_94X_DYJetsToLL_M50_Madgraph*.root',
         },
         'Run2018': {
-    #        'Run2018A': '*Run2018A*.root',
-    #        'Run2018B': '*Run2018B*.root',
-    #        'Run2018C': '*Run2018C*.root',
-    #        'Run2018D': '*Run2018D*.root',
+            'Run2018A': '*Run2018A*.root',
+            'Run2018B': '*Run2018B*.root',
+            'Run2018C': '*Run2018C*.root',
+            'Run2018D': '*Run2018D*.root',
             'DY_madgraph': 'TnPTreeZ_102XAutumn18_DYJetsToLL_M50_MadgraphMLM*.root'
         },
     },
@@ -114,6 +114,6 @@ def run_all(particle, probe, resonance, era):
     spark.stop()
 
 
-#run_all('muon', 'generalTracks', 'Z', 'Run2016')
-#run_all('muon', 'generalTracks', 'Z', 'Run2017')
+run_all('muon', 'generalTracks', 'Z', 'Run2016')
+run_all('muon', 'generalTracks', 'Z', 'Run2017')
 run_all('muon', 'generalTracks', 'Z', 'Run2018')

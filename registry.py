@@ -55,11 +55,7 @@ registry = Registry()
 
 _rpath = os.path.abspath(os.path.dirname(__file__))
 _jsons = [
-    # Muon POG generalTrack probes
-    'data/registry_muon_Z_generalTracks.json',
-    'data/registry_muon_JPsi_generalTracks.json',
-    # Muon POG standAloneMuon probes
-    'data/registry_muon_Z_standAloneMuons.json',
+    'data/registry_leptonMva.json',
 ]
 
 for fname in _jsons:

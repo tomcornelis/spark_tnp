@@ -203,15 +203,9 @@ def main(argv=None):
 
     if args.baseDir:
         baseDir = args.baseDir
-    elif args.particle == 'muon':
-        baseDir = os.path.join(
-            '/eos/cms/store/group/phys_muon',
-            f'{getpass.getuser()}/TagAndProbe',
-        )
     else:
         baseDir = os.path.join(
-            '/eos/cms/store/user',
-            f'{getpass.getuser()}/TagAndProbe/{args.particle}',
+            '/eos/user/%s/%s/www/muon_TagAndProbe/' % (getpass.getuser()[0], getpass.getuser()),
         )
 
     if args.command == 'convert':

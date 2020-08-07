@@ -66,11 +66,12 @@ def run_conversion(spark, particle, probe, resonance, era, subEra,
                       .option('tree', treename)\
                       .load(fnames)
     # create the miniIsoaltion columns
-    miniIsoDF = get_miniIso_dataframe(baseDF)
+    # miniIsoDF = get_miniIso_dataframe(baseDF)
 
     # create the definitions columns
     definitions = config.definitions()
-    defDF = miniIsoDF
+    #defDF = miniIsoDF
+    defDF = baseDF
 
     for d in definitions:
         defDF = defDF.withColumn(d, F.expr(definitions[d]))

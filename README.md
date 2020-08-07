@@ -43,6 +43,35 @@ This package is quite complicated, we therefore list here everything step by ste
 - Run the next cells
 
 
+### Flattening
+- Make sure the paths in the parquet fields in data/registry\_leptonMva.json are correct
+- Run
+```
+  ./tnp_fitter.py flatten muon generalTracks Z Run2016 configs/leptonMva.json
+  ./tnp_fitter.py flatten muon generalTracks Z Run2017 configs/leptonMva.json
+  ./tnp_fitter.py flatten muon generalTracks Z Run2018 configs/leptonMva.json
+```
+
+### Fitting
+- Run
+```
+  ./tnp_fitter.py fit muon generalTracks Z Run2016 configs/leptonMva.json -j 16
+  ./tnp_fitter.py fit muon generalTracks Z Run2017 configs/leptonMva.json -j 16
+  ./tnp_fitter.py fit muon generalTracks Z Run2018 configs/leptonMva.json -j 16
+```
+This will take a very long time, and you need to keep your lxplus connection open. It will probably be closed anyway, so then you can proceed in a new connection
+with the same commands and adding the --recover argument which will run the unfinished jobs.
+- Check the baseDir, which can be given as an additional argument or is redirecting to its default value specified in the tnp\_fitter.py, that's the place where the fits are ending up.
+The png files there could be shown on a website.
+
+
+### Plotting
+- Run
+```
+  ./tnp_fitter.py prepare muon generalTracks Z Run2016 configs/leptonMva.json
+  ./tnp_fitter.py prepare muon generalTracks Z Run2017 configs/leptonMva.json
+  ./tnp_fitter.py prepare muon generalTracks Z Run2018 configs/leptonMva.json
+```
 
 
 
