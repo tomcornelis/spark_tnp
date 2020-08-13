@@ -2,7 +2,7 @@
     "efficiencies": [
         ["LeptonMvaVLoose", "genTracks"],
         ["LeptonMvaLoose", "genTracks"],
-        ["LeptonMvaMedium", "genTracks"],
+        ["LeptonMvaMedium040", "genTracks"],
         ["LeptonMvaTight", "genTracks"]
     ],
     "selection": "tag_pt>26 and tag_abseta<2.4 and tag_IsoMu24==1 and pair_probeMultiplicity==1 and tag_combRelIsoPF04dBeta<0.2 and abs(pair_dz)<0.5 and dxyPVdzmin<0.2 and tag_dxyPVdzmin<0.2 and abs(dzPV)<0.5 and abs(tag_dzPV)<0.5",
@@ -11,7 +11,7 @@
         "Medium": "Medium == 1",
         "LeptonMvaVLoose": "PF==1 and Medium==1 and abs(dxy)<.05 and abs(dz)<0.1 and SIP3D<8 and miniIso<0.4 and leptonMvaTop>-0.45",
         "LeptonMvaLoose":  "PF==1 and Medium==1 and abs(dxy)<.05 and abs(dz)<0.1 and SIP3D<8 and miniIso<0.4 and leptonMvaTop>0.05",
-        "LeptonMvaMedium": "PF==1 and Medium==1 and abs(dxy)<.05 and abs(dz)<0.1 and SIP3D<8 and miniIso<0.4 and leptonMvaTop>0.65",
+        "LeptonMvaMedium040": "PF==1 and Medium==1 and abs(dxy)<.05 and abs(dz)<0.1 and SIP3D<8 and miniIso<0.4 and leptonMvaTop>0.40"
         "LeptonMvaTight":  "PF==1 and Medium==1 and abs(dxy)<.05 and abs(dz)<0.1 and SIP3D<8 and miniIso<0.4 and leptonMvaTop>0.90"
     },
     "binning": {

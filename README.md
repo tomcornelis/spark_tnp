@@ -30,7 +30,8 @@ This package is quite complicated, we therefore list here everything step by ste
 ```
   ./converter.py
 ```
-- The above step might fail a few times randomly. In order to avoid disk space issues the ROOT files are copied one by one to the analytix cluster and deleted immediately after.
+- The above step might fail a few times randomly. Comment out the already finished ones in the script and repeat.
+- In order to avoid disk space issues the ROOT files are copied by the script one by one to the analytix cluster and deleted immediately after.
 
 
 ### ROOT to PARQUET (alternative way)
