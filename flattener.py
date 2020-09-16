@@ -220,11 +220,6 @@ def run_conversion(spark, particle, probe, resonance, era, subEra,
 
 subEras = {
     'Z': {
-        # ultra legacy
-        'Run2016_UL_HIPM': ['Run2016', 'DY_madgraph'],
-        'Run2016_UL': ['Run2016', 'DY_madgraph'],
-        'Run2017_UL': ['Run2017', 'DY_madgraph'],
-        'Run2018_UL': ['Run2018', 'DY_madgraph', 'DY_powheg'],
         # ReReco
         'Run2016': ['Run2016', 'DY_madgraph'],
         'Run2017': ['Run2017', 'DY_madgraph'],
@@ -233,8 +228,9 @@ subEras = {
         # 'Run2017_UL': [f'Run2017{b}' for b in 'BCDEF']+['DY_madgraph'],
     },
     'JPsi': {
-        # ultra legacy
-        'Run2017_UL': ['Run2017', 'Jpsi'],
+        'Run2016': ['Run2016', 'DY_madgraph'],
+        'Run2017': ['Run2017', 'DY_madgraph'],
+        'Run2018': ['Run2018', 'DY_madgraph'],
     },
 }
 

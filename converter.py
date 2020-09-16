@@ -37,6 +37,33 @@ fnamesMap = {
             'DY_madgraph': 'TnPTreeZ_102XAutumn18_DYJetsToLL_M50_MadgraphMLM*.root'
         },
     },
+    'JPsi': {
+        'Run2016': {
+            'Run2016B': 'jpsi/*Run2016B*.root',
+            'Run2016C': 'jpsi/*Run2016C*.root',
+            'Run2016D': 'jpsi/*Run2016D*.root',
+            'Run2016E': 'jpsi/*Run2016E*.root',
+            'Run2016F': 'jpsi/*Run2016F*.root',
+            'Run2016G': 'jpsi/*Run2016G*.root',
+            'Run2016H': 'jpsi/*Run2016H*.root',
+            'DY_madgraph': 'jpsi/tnpJPsi_MC_JpsiPt8_TuneCUEP8M1*.root',
+        },
+        'Run2017': {
+            'Run2017B': 'jpsi/*Run2017B*.root',
+            'Run2017C': 'jpsi/*Run2017C*.root',
+            'Run2017D': 'jpsi/*Run2017D*.root',
+            'Run2017E': 'jpsi/*Run2017E*.root',
+            'Run2017F': 'jpsi/*Run2017F*.root',
+            'DY_madgraph': 'jpsi/TnPTreeJPsi_94X_JpsiToMuMu_Pythia8*.root',
+        },
+        'Run2018': {
+            'Run2018A': 'jpsi/*Run2018A*.root',
+            'Run2018B': 'jpsi/*Run2018B*.root',
+            'Run2018C': 'jpsi/*Run2018C*.root',
+            'Run2018D': 'jpsi/*Run2018D*.root',
+            'DY_madgraph': 'jpsi/TnPTreeJPsi_102XAutumn18_JpsiToMuMu_JpsiPt8_Pythia8*.root'
+        },
+    },
 }
 
 
@@ -64,9 +91,9 @@ def run_convert(spark, particle, probe, resonance, era, subEra):
         current = fnames[:batchsize]
         fnames = fnames[batchsize:]
 
-        current_analytix = [i.replace(sourceDir, 'hdfs://analytix/user/%s/' % user) for i in current]
+        current_analytix = [i.replace(sourceDir, 'hdfs://analytix/user/%s/' % user).replace('jpsi/','') for i in current]
         for x, y in zip(current, current_analytix):
-          shutil.copy(x, y.replace('hdfs://analytix', '/hdfs/analytix.cern.ch'))
+          shutil.copy(x, y.replace('hdfs://analytix', '/hdfs/analytix.cern.ch').replace('jpsi/',''))
 
         print('%s %s' % (treename, current))
         rootfiles = spark.read.format("root").option('tree', treename).load(current_analytix)
@@ -82,7 +109,7 @@ def run_convert(spark, particle, probe, resonance, era, subEra):
           rootfiles.write.mode('append').parquet(outname)
 
         for i in current_analytix: # immediately delete the files from analytix because of ridicously low disk quota
-          os.remove(i.replace('hdfs://analytix', '/hdfs/analytix.cern.ch'))
+          os.remove(i.replace('hdfs://analytix', '/hdfs/analytix.cern.ch').replace('jpsi/', ''))
         shutil.rmtree('/hdfs/analytix.cern.ch/user/%s/.Trash' % user) # because otherwise you reach the disk quota because of the trash bin
 
 
@@ -114,6 +141,9 @@ def run_all(particle, probe, resonance, era):
     spark.stop()
 
 
-run_all('muon', 'generalTracks', 'Z', 'Run2016')
-run_all('muon', 'generalTracks', 'Z', 'Run2017')
-run_all('muon', 'generalTracks', 'Z', 'Run2018')
+#run_all('muon', 'generalTracks', 'Z', 'Run2016')
+#run_all('muon', 'generalTracks', 'Z', 'Run2017')
+#run_all('muon', 'generalTracks', 'Z', 'Run2018')
+run_all('muon', 'generalTracks', 'JPsi', 'Run2016')
+#run_all('muon', 'generalTracks', 'JPsi', 'Run2017')
+#run_all('muon', 'generalTracks', 'JPsi', 'Run2018')

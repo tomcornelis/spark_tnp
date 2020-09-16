@@ -1,0 +1,71 @@
+{
+    "efficiencies": [
+        ["LeptonMvaMedium040", "genTracks"]
+    ],
+    "selection": "tag_pt>26 and tag_abseta<2.4 and tag_IsoMu24==1 and pair_probeMultiplicity==1 and tag_combRelIsoPF04dBeta<0.2 and abs(pair_dz)<0.5 and dxyPVdzmin<0.2 and tag_dxyPVdzmin<0.2 and abs(dzPV)<0.5 and abs(tag_dzPV)<0.5",
+    "definitions": {
+        "genTracks": "((pt<20 and mt<30) or (pt>20))",
+        "Medium": "Medium == 1",
+        "LeptonMvaVLoose": "PF==1 and Medium==1 and abs(dxy)<.05 and abs(dz)<0.1 and SIP3D<8 and miniIso<0.4 and leptonMvaTop>-0.45",
+        "LeptonMvaLoose":  "PF==1 and Medium==1 and abs(dxy)<.05 and abs(dz)<0.1 and SIP3D<8 and miniIso<0.4 and leptonMvaTop>0.05",
+        "LeptonMvaMedium040": "PF==1 and Medium==1 and abs(dxy)<.05 and abs(dz)<0.1 and SIP3D<8 and miniIso<0.4 and leptonMvaTop>0.40",
+        "LeptonMvaTight":  "PF==1 and Medium==1 and abs(dxy)<.05 and abs(dz)<0.1 and SIP3D<8 and miniIso<0.4 and leptonMvaTop>0.90"
+    },
+    "binning": {
+        "pt": [10, 15, 20, 25, 30, 40, 50, 60, 120],
+        "abseta": [0, 0.9, 1.2, 2.1, 2.4],
+        "eta": [-2.4, -2.1, -1.6, -1.2, -0.9, -0.3, -0.2, 0.2, 0.3, 0.9, 1.2, 1.6, 2.1, 2.4],
+        "njets": [-0.5, 0.5, 1.5, 2.5, 3.5, 4.5],
+        "nvtx": "np.array(range(10, 85, 5))",
+        "mass": "np.array(range(60*4, 140*4+1)) * 0.25",
+        "mcMass": "np.array(range(60*4, 140*4+1)) * 0.25"
+    },
+    "variables": {
+        "pt": {"variable": "pt", "pretty": "p_{T} (GeV)"},
+        "abseta": {"variable": "abseta", "pretty": "|#eta|"},
+        "eta": {"variable": "eta", "pretty": "#eta"},
+        "njets": {"variable": "pair_nJets30", "pretty": "Number of jets (p_{T} > 30 GeV)"},
+        "nvtx": {"variable": "tag_nVertices", "pretty": "Number of primary vertices"},
+        "mass": {"variable": "mass", "pretty": "m(#mu#mu) (GeV)"},
+        "mcMass": {"variable": "mcMass", "pretty": "m(#mu#mu) (GeV)"}
+    },
+    "fitVariable": "mass",
+    "fitVariableGen": "mcMass",
+    "binVariables": [
+        ["abseta", "pt"]
+    ],
+    "shifts": {
+        "TagIsoUp": {
+            "selection": "tag_pt>26 and tag_abseta<2.4 and tag_IsoMu24==1 and pair_probeMultiplicity==1 and tag_combRelIsoPF04dBeta<0.3 and abs(pair_dz)<0.5"
+        },
+        "TagIsoDown": {
+            "selection": "tag_pt>26 and tag_abseta<2.4 and tag_IsoMu24==1 and pair_probeMultiplicity==1 and tag_combRelIsoPF04dBeta<0.1 and abs(pair_dz)<0.5"
+        }
+    },
+    "fitShifts": {
+        "AltSig": {"fitType": "AltSig"},
+        "AltBkg": {"fitType": "AltBkg"},
+        "NominalOld": {"fitType": "NominalOld"},
+        "AltSigOld": {"fitType": "AltSigOld"},
+        "tagIsoUp": {"shiftType": "tagIsoUp", "inType": "TagIsoUp"},
+        "tagIsoDown": {"shiftType": "tagIsoDown", "inType": "TagIsoDown"},
+        "massBinUp": {"shiftType": "massBinUp"},
+        "massBinDown": {"shiftType": "massBinDown"},
+        "massRangeUp": {"shiftType": "massRangeUp"},
+        "massRangeDown": {"shiftType": "massRangeDown"}
+    },
+    "systematics" : {
+        "SF": {
+            "fitTypes": ["AltSig"],
+            "shiftTypes": ["tagIso", "massBin", "massRange"]
+        },
+        "dataEff": {
+            "fitTypes": ["AltSig"],
+            "shiftTypes": ["tagIso", "massBin", "massRange"]
+        },
+        "mcEff": {
+            "fitTypes": [],
+            "shiftTypes": ["tagIso", "massRange"]
+        }
+    }
+}

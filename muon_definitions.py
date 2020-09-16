@@ -83,6 +83,9 @@ def get_data_mc_sub_eras(resonance, era):
             'Run2018': ['Run2018', 'DY_madgraph'],
         },
         'JPsi': {
+            'Run2016': ['Run2016', 'DY_madgraph'],
+            'Run2017': ['Run2017', 'DY_madgraph'],
+            'Run2018': ['Run2018', 'DY_madgraph'],
             # ultra legacy
             'Run2017_UL': ['Run2017', 'Jpsi'],
             # heavy ion
