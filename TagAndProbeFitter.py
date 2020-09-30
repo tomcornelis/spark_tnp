@@ -4,6 +4,7 @@ import tdrstyle
 ROOT.gROOT.SetBatch()
 tdrstyle.setTDRStyle()
 
+# Still lots of code duplication, just worked on what was already in there
 
 class TagAndProbeFitter:
 
@@ -39,49 +40,40 @@ class TagAndProbeFitter:
         self._fitRangeMin = fMin
         self._fitRangeMax = fMax
 
+    def importHist(self, name, window):
+        self._hists[name].SetDirectory(ROOT.gROOT)
+        setattr(self, '_n%s' % name, self._hists[name].Integral())
+        setattr(self, '_n%s_central' % name, self._hists[name].Integral(*window))
+        dataHist = ROOT.RooDataHist('h' + name, 'h' + name, ROOT.RooArgList(self._w.var(self._fitVar)), self._hists[name])
+        self.wsimport(dataHist)
+
     def set_histograms(self, hPass, hFail, peak=90):
         self._hists['Pass'] = hPass.Clone()
         self._hists['Fail'] = hFail.Clone()
-        self._hists['Pass'].SetDirectory(ROOT.gROOT)
-        self._hists['Fail'].SetDirectory(ROOT.gROOT)
-        self._nPass = hPass.Integral()
-        self._nFail = hFail.Integral()
+        hTot = hFail.Clone()
+        hTot.Add(hPass)
+        self._hists['Tot'] = hTot.Clone()
         pb = hPass.FindBin(peak)
         nb = hPass.GetNbinsX()
         window = [int(pb-0.1*nb), int(pb+0.1*nb)]
-        self._nPass_central = hPass.Integral(*window)
-        self._nFail_central = hFail.Integral(*window)
-        dhPass = ROOT.RooDataHist(
-            'hPass', 'hPass',
-            ROOT.RooArgList(self._w.var(self._fitVar)), hPass)
-        dhFail = ROOT.RooDataHist(
-            'hFail', 'hFail',
-            ROOT.RooArgList(self._w.var(self._fitVar)), hFail)
-        self.wsimport(dhPass)
-        self.wsimport(dhFail)
+        self.importHist('Pass', window)
+        self.importHist('Fail', window)
+        self.importHist('Tot', window)
 
     def set_gen_shapes(self, hPass, hFail, peak=90):
         self._hists['GenPass'] = hPass.Clone()
         self._hists['GenFail'] = hFail.Clone()
-        self._hists['GenPass'].SetDirectory(ROOT.gROOT)
-        self._hists['GenFail'].SetDirectory(ROOT.gROOT)
-        self._nGenPass = hPass.Integral()
-        self._nGenFail = hFail.Integral()
+        hTot = hFail.Clone()
+        hTot.Add(hPass)
+        self._hists['GenTot'] = hTot.Clone()
         pb = hPass.FindBin(peak)
         nb = hPass.GetNbinsX()
         window = [int(pb-0.1*nb), int(pb+0.1*nb)]
-        self._nGenPass_central = hPass.Integral(*window)
-        self._nGenFail_central = hFail.Integral(*window)
-        dhPass = ROOT.RooDataHist(
-            'hGenPass', 'hGenPass',
-            ROOT.RooArgList(self._w.var(self._fitVar)), hPass)
-        dhFail = ROOT.RooDataHist(
-            'hGenFail', 'hGenFail',
-            ROOT.RooArgList(self._w.var(self._fitVar)), hFail)
-        self.wsimport(dhPass)
-        self.wsimport(dhFail)
+        self.importHist('GenPass', window)
+        self.importHist('GenFail', window)
+        self.importHist('GenTot', window)
 
-    def set_workspace(self, lines, template=True):
+    def set_workspace(self, lines, template=True, useTot=True):
         for line in lines:
             self._w.factory(line)
 
@@ -89,53 +81,70 @@ class TagAndProbeFitter:
         nBkgP = 0.1*self._nPass
         nSigF = 0.1*self._nFail
         nBkgF = 0.9*self._nFail
+        nSigT = 0.1*self._nTot
+        nBkgT = 0.9*self._nTot
         nPassHigh = 1.1*self._nPass
         nFailHigh = 1.1*self._nFail
+        nTotHigh = 1.1*self._nTot
 
         if template:
-            self._w.factory(
-                "HistPdf::sigPhysPass({}, hGenPass)".format(self._fitVar))
-            self._w.factory(
-                "HistPdf::sigPhysFail({}, hGenFail)".format(self._fitVar))
-            self._w.factory(
-                "FCONV::sigPass({}, sigPhysPass , sigResPass)".format(
-                    self._fitVar))
-            self._w.factory(
-                "FCONV::sigFail({}, sigPhysFail , sigResFail)".format(
-                    self._fitVar))
+            self._w.factory("HistPdf::sigPhysPass({}, hGenPass)".format(self._fitVar))
+            if useTot: self._w.factory("HistPdf::sigPhysTot({}, hGenTot)".format(self._fitVar))
+            else:      self._w.factory("HistPdf::sigPhysFail({}, hGenFail)".format(self._fitVar))
+            self._w.factory("FCONV::sigPass({}, sigPhysPass , sigResPass)".format(self._fitVar))
+            if useTot: self._w.factory("FCONV::sigTot({}, sigPhysTot , sigResTot)".format(self._fitVar))
+            else:      self._w.factory("FCONV::sigFail({}, sigPhysFail , sigResFail)".format(self._fitVar))
+
             # update initial guesses
             nSigP = self._nGenPass_central / self._nGenPass * self._nPass
-            nSigF = self._nGenFail_central / self._nGenFail * self._nFail
-            if nSigP < 0.5:
-                nSigP = 0.9 * self._nPass
-            if nSigF < 0.5:
-                nSigF = 0.1 * self._nFail
+            if nSigP < 0.5: nSigP = 0.9 * self._nPass
+
+            if useTot:
+              nSigT = self._nGenTot_central / self._nGenTot * self._nTot
+              if nSigT < 0.5: nSigT = 0.1 * self._nTot
+            else:
+              nSigF = self._nGenFail_central / self._nGenFail * self._nFail
+              if nSigF < 0.5: nSigF = 0.1 * self._nFail
 
         # build extended pdf
         self._w.factory("nSigP[{}, 0.5, {}]".format(nSigP, nPassHigh))
         self._w.factory("nBkgP[{}, 0.5, {}]".format(nBkgP, nPassHigh))
-        self._w.factory("nSigF[{}, 0.5, {}]".format(nSigF, nFailHigh))
-        self._w.factory("nBkgF[{}, 0.5, {}]".format(nBkgF, nFailHigh))
         self._w.factory("SUM::pdfPass(nSigP*sigPass, nBkgP*bkgPass)")
-        self._w.factory("SUM::pdfFail(nSigF*sigFail, nBkgF*bkgFail)")
+        if useTot:
+          self._w.factory("nSigT[{}, 0.5, {}]".format(nSigT, nTotHigh))
+          self._w.factory("nBkgT[{}, 0.5, {}]".format(nBkgT, nTotHigh))
+          self._w.factory("SUM::pdfTot(nSigT*sigTot, nBkgT*bkgTot)")
+        else:
+          self._w.factory("nSigF[{}, 0.5, {}]".format(nSigF, nFailHigh))
+          self._w.factory("nBkgF[{}, 0.5, {}]".format(nBkgF, nFailHigh))
+          self._w.factory("SUM::pdfFail(nSigF*sigFail, nBkgF*bkgFail)")
 
         # import the class code in case of non-standard PDFs
         self._w.importClassCode("bkgPass")
-        self._w.importClassCode("bkgFail")
         self._w.importClassCode("sigPass")
-        self._w.importClassCode("sigFail")
+        if useTot:
+          self._w.importClassCode("bkgTot")
+          self._w.importClassCode("sigTot")
+        else:
+          self._w.importClassCode("bkgFail")
+          self._w.importClassCode("sigFail")
 
-    def fit(self, outFName, mcTruth=False, template=True):
+    def fit(self, outFName, mcTruth=False, template=True, useTot=True):
 
         pdfPass = self._w.pdf('pdfPass')
-        pdfFail = self._w.pdf('pdfFail')
+        if useTot: pdfTot = self._w.pdf('pdfTot')
+        else:      pdfFail = self._w.pdf('pdfFail')
 
         # if we are fitting MC truth, then set background things to constant
         if mcTruth and template:
             self._w.var('nBkgP').setVal(0)
             self._w.var('nBkgP').setConstant()
-            self._w.var('nBkgF').setVal(0)
-            self._w.var('nBkgF').setConstant()
+            if useTot:
+              self._w.var('nBkgT').setVal(0)
+              self._w.var('nBkgT').setConstant()
+            else:
+              self._w.var('nBkgF').setVal(0)
+              self._w.var('nBkgF').setConstant()
 
         # set the range on the fit var
         # needs to be smaller than the histogram range for the convolution
@@ -154,19 +163,29 @@ class TagAndProbeFitter:
 
         # when convolving, set fail sigma to fitted pass sigma
         if template:
-            self._w.var('sigmaF').setVal(
+            sigma = 'sigmaT' if useTot else 'sigmaF'
+            self._w.var(sigma).setVal(
                 self._w.var('sigmaP').getVal())
-            self._w.var('sigmaF').setRange(
+            self._w.var(sigma).setRange(
                 0.8 * self._w.var('sigmaP').getVal(),
                 3.0 * self._w.var('sigmaP').getVal())
 
         # fit failing histogram
-        resFail = pdfFail.fitTo(self._w.data("hFail"),
-                                ROOT.RooFit.Minos(self._useMinos),
-                                ROOT.RooFit.SumW2Error(True),
-                                ROOT.RooFit.Save(),
-                                ROOT.RooFit.Range("fitRange"),
-                                )
+        if useTot:
+          resTot = pdfTot.fitTo(self._w.data("hTot"),
+                                  ROOT.RooFit.Minos(self._useMinos),
+                                  ROOT.RooFit.SumW2Error(True),
+                                  ROOT.RooFit.Save(),
+                                  ROOT.RooFit.Range("fitRange"),
+                                  )
+        else:
+          resFail = pdfFail.fitTo(self._w.data("hFail"),
+                                  ROOT.RooFit.Minos(self._useMinos),
+                                  ROOT.RooFit.SumW2Error(True),
+                                  ROOT.RooFit.Save(),
+                                  ROOT.RooFit.Range("fitRange"),
+                                  )
+
 
         # plot
         # need to run chi2 after plotting full pdf
@@ -198,20 +217,21 @@ class TagAndProbeFitter:
         # fail
         fFrame = self._w.var(self._fitVar).frame(
             self._fitRangeMin, self._fitRangeMax)
-        fFrame.SetTitle('Failing probes')
-        self._w.data('hFail').plotOn(fFrame)
-        self._w.pdf('pdfFail').plotOn(fFrame,
-                                      ROOT.RooFit.Components('bkgFail'),
+        fFrame.SetTitle('Total probes' if useTot else 'Failing probes')
+        self._w.data('hTot' if useTot else 'hFail').plotOn(fFrame)
+        self._w.pdf('pdfTot' if useTot else 'pdfFail').plotOn(fFrame,
+                                      ROOT.RooFit.Components('bkgTot' if useTot else'bkgFail'),
                                       ROOT.RooFit.LineColor(ROOT.kBlue),
                                       ROOT.RooFit.LineStyle(ROOT.kDashed),
                                       )
-        self._w.pdf('pdfFail').plotOn(fFrame,
+        self._w.pdf('pdfTot' if useTot else 'pdfFail').plotOn(fFrame,
                                       ROOT.RooFit.LineColor(ROOT.kRed),
                                       )
         # -2 for the extened PDF norm for bkg and sig
-        ndoff = resFail.floatParsFinal().getSize() - 2
+        if useTot: ndoff = resTot.floatParsFinal().getSize() - 2
+        else:      ndoff = resFail.floatParsFinal().getSize() - 2
         chi2f = fFrame.chiSquare(ndoff)
-        self._w.data('hFail').plotOn(fFrame)
+        self._w.data('hTot' if useTot else 'hFail').plotOn(fFrame)
 
         # residuals/pull
         pullF = fFrame.pullHist()
@@ -223,44 +243,49 @@ class TagAndProbeFitter:
         statTests = ROOT.TTree('statTests', 'statTests')
         branches = {}
         branches['chi2P'] = array('f', [0])
-        branches['chi2F'] = array('f', [0])
+        branches['chi2T' if useTot else 'chi2F'] = array('f', [0])
         branches['ksP'] = array('f', [0])
-        branches['ksF'] = array('f', [0])
+        branches['ksT' if useTot else 'ksF'] = array('f', [0])
         for b in branches:
             statTests.Branch(b, branches[b], '{}/F'.format(b))
 
         # chi2
         branches['chi2P'][0] = chi2p
-        branches['chi2F'][0] = chi2f
+        branches['chi2T' if useTot else 'chi2F'][0] = chi2f
 
         # KS
         binWidth = self._hists['Pass'].GetBinWidth(1)
         nbins = int((self._fitRangeMax - self._fitRangeMin) / binWidth)
-        hPdfPass = self._w.pdf('pdfPass').createHistogram(
-            'ks_pdfPass',
-            self._w.var(self._fitVar),
-            ROOT.RooFit.Binning(nbins),
-        )
-        hDataPass = self._w.data('hPass').createHistogram(
-            'ks_hPass',
-            self._w.var(self._fitVar),
-            ROOT.RooFit.Binning(nbins),
-        )
+
+        def getPdfHist(name):
+          return self._w.pdf(name).createHistogram(
+              'ks_%s' % name,
+              self._w.var(self._fitVar),
+              ROOT.RooFit.Binning(nbins),
+          )
+
+        def getDataHist(name):
+          return self._w.data(name).createHistogram(
+              'ks_%s' % name,
+              self._w.var(self._fitVar),
+              ROOT.RooFit.Binning(nbins),
+          )
+
+        hPdfPass = getPdfHist('pdfPass')
+        hDataPass = getDataHist('hPass')
         ksP = hDataPass.KolmogorovTest(hPdfPass)
         branches['ksP'][0] = ksP
 
-        hPdfFail = self._w.pdf('pdfFail').createHistogram(
-            'ks_pdfFail',
-            self._w.var(self._fitVar),
-            ROOT.RooFit.Binning(nbins),
-        )
-        hDataFail = self._w.data('hFail').createHistogram(
-            'ks_hFail',
-            self._w.var(self._fitVar),
-            ROOT.RooFit.Binning(nbins),
-        )
-        ksF = hDataFail.KolmogorovTest(hPdfFail)
-        branches['ksF'][0] = ksF
+        if useTot:
+          hPdfTot = getPdfHist('pdfTot')
+          hDataTot = getDataHist('hTot') 
+          ksT = hDataPass.KolmogorovTest(hPdfTot)
+          branches['ksT'][0] = ksT
+        else:
+          hPdfFail = getPdfHist('pdfFail')
+          hDataFail = getDataHist('hFail') 
+          ksF = hDataPass.KolmogorovTest(hPdfFail)
+          branches['ksF'][0] = ksF
 
         statTests.Fill()
 
@@ -274,26 +299,35 @@ class TagAndProbeFitter:
         e_eff = 0
 
         nSigP = self._w.var("nSigP")
-        nSigF = self._w.var("nSigF")
+        if useTot: nSigT = self._w.var("nSigT")
+        else:      nSigF = self._w.var("nSigF")
 
-        nP = nSigP.getVal()
-        e_nP = nSigP.getError()
-        nF = nSigF.getVal()
-        e_nF = nSigF.getError()
-        nTot = nP + nF
-        eff = nP / (nP + nF)
-        e_eff = 1.0 / nTot * (e_nP**2 / nP**2 + e_nF**2 / nF**2)**0.5
+        if useTot:
+          nP, e_nP = nSigP.getVal(), nSigP.getError()
+          nTot, e_nT = nSigT.getVal(), nSigT.getError()
+          nF = nTot-nP
+          eff = nP / nTot
+          e_eff = 1.0 / nTot * (e_nP**2 / nP**2 + e_nT**2 / nTot**2)**0.5
+        else:
+          nP, e_nP = nSigP.getVal(), nSigP.getError()
+          nF, e_nF = nSigF.getVal(), nSigF.getError()
+          nTot = nP + nF
+          eff = nP / (nP + nF)
+          e_eff = 1.0 / nTot * (e_nP**2 / nP**2 + e_nF**2 / nF**2)**0.5
 
         text1 = ROOT.TPaveText(0, 0.8, 1, 1)
         text1.SetFillColor(0)
         text1.SetBorderSize(0)
         text1.SetTextAlign(12)
 
-        text1.AddText("Fit status pass: {}, fail: {}".format(
-            resPass.status(), resFail.status()))
-        text1.AddText("#chi^{{2}}/ndof pass: {:.3f}, fail: {:.3f}".format(
-            chi2p, chi2f))
-        text1.AddText("KS pass: {:.3f}, fail: {:.3f}".format(ksP, ksF))
+        if useTot:
+          text1.AddText("Fit status pass: {}, total: {}".format(resPass.status(), resTot.status()))
+          text1.AddText("#chi^{{2}}/ndof pass: {:.3f}, total: {:.3f}".format(chi2p, chi2f))
+          text1.AddText("KS pass: {:.3f}, total: {:.3f}".format(ksP, ksT))
+        else:
+          text1.AddText("Fit status pass: {}, fail: {}".format(resPass.status(), resFail.status()))
+          text1.AddText("#chi^{{2}}/ndof pass: {:.3f}, fail: {:.3f}".format(chi2p, chi2f))
+          text1.AddText("KS pass: {:.3f}, fail: {:.3f}".format(ksP, ksF))
         text1.AddText("eff = {:.4f} #pm {:.4f}".format(eff, e_eff))
 
         text = ROOT.TPaveText(0, 0, 1, 0.8)
@@ -321,8 +355,8 @@ class TagAndProbeFitter:
             text.AddText("    - {} \t= {:.3f} #pm {:.3f}".format(
                 pName, pVar.getVal(), pVar.getError()))
 
-        text.AddText("    fail")
-        listParFinalF = argsetToList(resFail.floatParsFinal())
+        text.AddText("    total" if useTot else "    fail")
+        listParFinalF = argsetToList(resTot.floatParsFinal() if useTot else resFail.floatParsFinal())
         for p in listParFinalF:
             pName = p.GetName()
             pVar = self._w.var(pName)
@@ -415,7 +449,8 @@ class TagAndProbeFitter:
         #              ROOT.TObject.kOverwrite)
         canvas.Write('{}_Canv'.format(self._name), ROOT.TObject.kOverwrite)
         resPass.Write('{}_resP'.format(self._name), ROOT.TObject.kOverwrite)
-        resFail.Write('{}_resF'.format(self._name), ROOT.TObject.kOverwrite)
+        if useTot: resTot.Write('{}_resT'.format(self._name), ROOT.TObject.kOverwrite)
+        else:      resFail.Write('{}_resF'.format(self._name), ROOT.TObject.kOverwrite)
         statTests.Write('{}_statTests'.format(self._name),
                         ROOT.TObject.kOverwrite)
         for hKey in self._hists:

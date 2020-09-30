@@ -27,12 +27,23 @@ def computeEff(n1, n2, e1, e2):
         e1 * e1 * n2 * n2 + e2 * e2 * n1 * n1) / (n1 + n2)
     return eff, err
 
+def computeEffWithTotal(n1, n2, e1, e2):
+    eff = n1 / n2
+    err = 1 / n2 * math.sqrt(
+        e1 * e1 * n2 * n2 + e2 * e2 * n1 * n1) / (n1 + n2)
+    return eff, err
 
-def getEff(binName, fname, shift=None):
+
+
+def getEff(binName, fname, shift=None, useTotal=True):
     try:
         tfile = ROOT.TFile(fname, 'read')
         hP = tfile.Get('{}_GenPass'.format(binName))
-        hF = tfile.Get('{}_GenFail'.format(binName))
+        if useTotal:
+          hT = tfile.Get('{}_GenTot'.format(binName))
+        else:
+          hF = tfile.Get('{}_GenFail'.format(binName))
+
         # hard code Z for now (same as in run_single_fit.py)
         if shift == 'massRangUp':
             blow, bhigh = 75, 135
@@ -45,8 +56,13 @@ def getEff(binName, fname, shift=None):
         eP = ctypes.c_double(-1.0)
         eF = ctypes.c_double(-1.0)
         nP = hP.IntegralAndError(bin1, bin2, eP)
-        nF = hF.IntegralAndError(bin1, bin2, eF)
-        eff, err = computeEff(nP, nF, eP.value, eF.value)
+
+        if useTotal:
+          nT = hT.IntegralAndError(bin1, bin2, eF)
+          eff, err = computeEffWithTotal(nP, nT, eP.value, eF.value)
+        else:
+          nF = hF.IntegralAndError(bin1, bin2, eF)
+          eff, err = computeEff(nP, nF, eP.value, eF.value)
         tfile.Close()
         return eff, err
     except Exception as e:
@@ -56,22 +72,21 @@ def getEff(binName, fname, shift=None):
         return 1., 0.
 
 
-def getDataEff(binName, fname, shift=None):
+def getDataEff(binName, fname, shift=None, useTotal=True):
+    def getEffAndHist(tfile, binName, type):
+        fitres = tfile.Get('{}_res{}'.format(binName, type[0]))
+        fit = fitres.floatParsFinal().find('nSig%s' % type[0])
+        h = tfile.Get('{}_{}'.format(binName, type))
+        return fit.getVal(), fit.getError(), h
+
     try:
         tfile = ROOT.TFile(fname, 'read')
-        fitresP = tfile.Get('{}_resP'.format(binName))
-        fitresF = tfile.Get('{}_resF'.format(binName))
+        nP, eP, hP = getEffAndHist(tfile, binName, 'Pass')
+        if useTotal:
+          nT, eT, hT = getEffAndHist(tfile, binName, 'Tot')
+        else:
+          nF, eF, hF = getEffAndHist(tfile, binName, 'Fail')
 
-        fitP = fitresP.floatParsFinal().find('nSigP')
-        fitF = fitresF.floatParsFinal().find('nSigF')
-
-        nP = fitP.getVal()
-        nF = fitF.getVal()
-        eP = fitP.getError()
-        eF = fitF.getError()
-
-        hP = tfile.Get('{}_Pass'.format(binName))
-        hF = tfile.Get('{}_Fail'.format(binName))
         # hard code Z for now (same as in run_single_fit.py)
         if shift == 'massRangUp':
             blow, bhigh = 75, 135
@@ -84,14 +99,18 @@ def getDataEff(binName, fname, shift=None):
         ePalt = ctypes.c_double(-1.0)
         eFalt = ctypes.c_double(-1.0)
         hP.IntegralAndError(bin1, bin2, ePalt)
-        hF.IntegralAndError(bin1, bin2, eFalt)
-
         eP = min(eP, ePalt.value)
-        eF = min(eF, eFalt.value)
+        if useTotal:
+          hT.IntegralAndError(bin1, bin2, eFalt)
+          eT = min(eT, eFalt.value)
+          return computeEffWithTotal(nP, nT, eP, eT)
+        else:
+          hF.IntegralAndError(bin1, bin2, eFalt)
+          eF = min(eF, eFalt.value)
+          return computeEff(nP, nF, eP, eF)
 
         tfile.Close()
 
-        return computeEff(nP, nF, eP, eF)
     except Exception as e:
         print('Exception for', binName)
         print(e)

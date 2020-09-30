@@ -11,7 +11,7 @@ ROOT.gROOT.LoadMacro('RooCMSShape.cc+')
 
 
 def hist_fitter(outFName, inFName, binName, templateFName, plotDir,
-                version='Nominal', histType='data', shiftType='Nominal'):
+                version='Nominal', histType='data', shiftType='Nominal', useTot=True):
 
     # Nominal
     tnpNomFitSig = [
@@ -151,8 +151,10 @@ def hist_fitter(outFName, inFName, binName, templateFName, plotDir,
     fileTruth.Close()
 
     # set workspace
-    fitter.set_workspace(tnpWorkspace, doTemplate)
-    fitter.fit(outFName, histType == 'mc', doTemplate)
+    if useTot:
+      tnpWorkspace = [t.replace('Fail', 'Tot').replace('F', 'T') for t in tnpWorkspace]
+    fitter.set_workspace(tnpWorkspace, doTemplate, useTot=useTot)
+    fitter.fit(outFName, histType == 'mc', doTemplate, useTot=useTot)
 
 
 # TODO other fits and argparse
